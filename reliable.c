@@ -102,6 +102,13 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 void
 rel_read (rel_t *s)
 {
+	char* senderbuffer = malloc(sizeof(char));
+	int r = conn_input(s->c, (void *)senderbuffer, sizeof(char));
+	while (r>0) {
+		fprintf(stderr, "%c", *senderbuffer);
+		r = conn_input(s->c, (void *)senderbuffer, sizeof(char));
+	}
+	fprintf(stderr, "\n");
 }
 
 void
