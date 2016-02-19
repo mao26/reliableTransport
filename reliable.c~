@@ -86,7 +86,7 @@ struct conn {
 static conn_t *conn_list;
 struct timespec last_timeout;
 
-#if !DMALLOC 
+#if !DMALLOC
 void *
 xmalloc (size_t n)
 {
