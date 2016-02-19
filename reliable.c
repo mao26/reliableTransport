@@ -24,7 +24,7 @@ struct reliable_state {
   conn_t *c;			/* This is the connection object */
 
   /* Add your own data fields below this */
-
+  int seqnum;
 };
 rel_t *rel_list;
 
@@ -60,8 +60,9 @@ rel_create (conn_t *c, const struct sockaddr_storage *ss,
     rel_list->prev = &r->next;
   rel_list = r;
 
+  fprintf(stderr,"rel_create\n");
   /* Do any other initialization you need here */
-
+  r->seqnum = 1;
 
   return r;
 }
@@ -74,6 +75,7 @@ rel_destroy (rel_t *r)
   *r->prev = r->next;
   conn_destroy (r->c);
 
+  fprintf(stderr,"rel_destroy\n");
   /* Free any other allocated memory here */
 }
 
@@ -96,6 +98,7 @@ rel_demux (const struct config_common *cc,
 void
 rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 {
+	fprintf(stderr, "received");
 }
 
 
@@ -104,9 +107,25 @@ rel_read (rel_t *s)
 {
 	char* senderbuffer = malloc(sizeof(char));
 	int r = conn_input(s->c, (void *)senderbuffer, sizeof(char));
+	int dataindex = 0;
+		packet_t* pack = malloc(sizeof(packet_t));
+		pack->cksum = 0;
+		pack->ackno = htonl(1);
+		pack->seqno = htonl(s->seqnum);
+		//strcpy(pack->data, senderbuffer);
+
 	while (r>0) {
-		fprintf(stderr, "%c", *senderbuffer);
+		pack->data[dataindex]=*senderbuffer;
 		r = conn_input(s->c, (void *)senderbuffer, sizeof(char));
+		dataindex++;
+	}
+	fprintf(stderr, "%s", pack->data);
+	pack->len = htons(12+sizeof(char)*strlen(pack->data));
+	pack->cksum = cksum(pack, ntohs(pack->len));
+	conn_sendpkt(s->c, pack, sizeof(packet_t));
+	s->seqnum++;
+	if (r==-1) {
+		//handle EOF packet
 	}
 	fprintf(stderr, "\n");
 }
