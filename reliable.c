@@ -25,6 +25,7 @@ struct reliable_state {
 
   /* Add your own data fields below this */
   int seqnum;
+  char* senderbuffer;;
 };
 rel_t *rel_list;
 
@@ -63,7 +64,7 @@ rel_create (conn_t *c, const struct sockaddr_storage *ss,
   fprintf(stderr,"rel_create\n");
   /* Do any other initialization you need here */
   r->seqnum = 1;
-
+  r->senderbuffer = malloc(sizeof(char));
   return r;
 }
 
@@ -77,6 +78,7 @@ rel_destroy (rel_t *r)
 
   fprintf(stderr,"rel_destroy\n");
   /* Free any other allocated memory here */
+  free(r->senderbuffer);
 }
 
 
@@ -105,8 +107,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 void
 rel_read (rel_t *s)
 {
-	char* senderbuffer = malloc(sizeof(char));
-	int r = conn_input(s->c, (void *)senderbuffer, sizeof(char));
+	int r = conn_input(s->c, (void *)(s->senderbuffer), sizeof(char));
 	int dataindex = 0;
 		packet_t* pack = malloc(sizeof(packet_t));
 		pack->cksum = 0;
@@ -115,8 +116,8 @@ rel_read (rel_t *s)
 		//strcpy(pack->data, senderbuffer);
 
 	while (r>0) {
-		pack->data[dataindex]=*senderbuffer;
-		r = conn_input(s->c, (void *)senderbuffer, sizeof(char));
+		pack->data[dataindex]=*(s->senderbuffer);
+		r = conn_input(s->c, (void *)(s->senderbuffer), sizeof(char));
 		dataindex++;
 	}
 	fprintf(stderr, "%s", pack->data);
