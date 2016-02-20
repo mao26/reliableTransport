@@ -25,7 +25,8 @@ struct reliable_state {
 
   /* Add your own data fields below this */
   int seqnum;
-  char* senderbuffer;;
+  char* senderbuffer;
+  int acknum;
 };
 rel_t *rel_list;
 
@@ -65,6 +66,7 @@ rel_create (conn_t *c, const struct sockaddr_storage *ss,
   /* Do any other initialization you need here */
   r->seqnum = 1;
   r->senderbuffer = malloc(sizeof(char));
+  r->acknum = 1;
   return r;
 }
 
@@ -100,7 +102,28 @@ rel_demux (const struct config_common *cc,
 void
 rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 {
-	fprintf(stderr, "received");
+	//fprintf(stderr, "recvpkt: %s", pkt->data);
+	if (ntohs(pkt->len)==8) {
+		//fprintf(stderr,"ackkkkkkkkkkkkkk");
+
+	}
+	else if (ntohs(pkt->len)>11) {
+		rel_output(r);
+		int dataindex = 0;
+		while (dataindex<(ntohs(pkt->len)/sizeof(char)-12)) {
+			*(r->senderbuffer) = pkt->data[dataindex];
+			conn_output(r->c, (void *)(r->senderbuffer), sizeof(char));
+			dataindex++;
+		}
+
+		packet_t* ackpack = malloc(sizeof(packet_t));
+		ackpack->cksum = 0;
+		r->acknum++;
+		ackpack->ackno = htonl(r->acknum);
+		ackpack->len = htons(8); //not sure if this is correct
+		ackpack->cksum = cksum(ackpack, ntohs(ackpack->len));
+		conn_sendpkt(r->c, ackpack, sizeof(packet_t));
+	}
 }
 
 
@@ -120,7 +143,7 @@ rel_read (rel_t *s)
 		r = conn_input(s->c, (void *)(s->senderbuffer), sizeof(char));
 		dataindex++;
 	}
-	fprintf(stderr, "%s", pack->data);
+	//fprintf(stderr, "%s", pack->data);
 	pack->len = htons(12+sizeof(char)*strlen(pack->data));
 	pack->cksum = cksum(pack, ntohs(pack->len));
 	conn_sendpkt(s->c, pack, sizeof(packet_t));
@@ -128,12 +151,14 @@ rel_read (rel_t *s)
 	if (r==-1) {
 		//handle EOF packet
 	}
-	fprintf(stderr, "\n");
+	//fprintf(stderr, "\n");
 }
 
 void
 rel_output (rel_t *r)
 {
+	//fprintf(stderr, "reloutputtt\n");
+
 }
 
 void
