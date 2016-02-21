@@ -118,7 +118,6 @@ void
 rel_sendeof(rel_t *r) {
 		packet_t* eofpack = malloc(sizeof(packet_t));
 		eofpack->cksum = 0;
-		r->acknum++;
 		eofpack->ackno = htonl(r->acknum);
 		eofpack->len = htons(12); //not sure if this is correct
 		eofpack->seqno = htonl(r->seqnum);
@@ -175,7 +174,7 @@ rel_read (rel_t *s)
 
 	while (r>0) {
 		pack->data[dataindex]=*(s->senderbuffer);
-		fprintf(stderr,"\nintermediate: %c",*(s->senderbuffer));
+		//fprintf(stderr,"\nintermediate: %c",*(s->senderbuffer));
 		r = conn_input(s->c, (void *)(s->senderbuffer), 1);
 		dataindex++;
 		if (dataindex==500) {
