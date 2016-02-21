@@ -114,6 +114,18 @@ rel_sendack(rel_t *r) {
 		ackpack->cksum = cksum(ackpack, ntohs(ackpack->len));
 		conn_sendpkt(r->c, ackpack, sizeof(packet_t));
 }
+void
+rel_sendeof(rel_t *r) {
+		packet_t* eofpack = malloc(sizeof(packet_t));
+		eofpack->cksum = 0;
+		r->acknum++;
+		eofpack->ackno = htonl(r->acknum);
+		eofpack->len = htons(12); //not sure if this is correct
+		eofpack->seqno = htonl(r->seqnum);
+		eofpack->cksum = cksum(eofpack, ntohs(eofpack->len));
+		conn_sendpkt(r->c, eofpack, sizeof(packet_t));
+		r->seqnum++;
+}
 
 void
 rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
@@ -125,6 +137,9 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	}
 	else if (ntohs(pkt->len)==12) {
 		rel_sendack(r);
+		conn_output(r->c,(void *)(r->receiverbuffer),0);
+		rel_destroy(r);
+		return;
 	}
 	else if (ntohs(pkt->len)>12) {
 		rel_output(r);
@@ -145,16 +160,23 @@ void
 rel_read (rel_t *s)
 {
 	int r = conn_input(s->c, (void *)(s->senderbuffer), sizeof(char));
+	if (r==-1) {
+		fprintf(stderr,"eofffffffffffffffffffffff");
+		rel_sendeof(s);
+		rel_destroy(s);
+		return;
+	}
 	int dataindex = 0;
-		packet_t* pack = malloc(sizeof(packet_t));
-		pack->cksum = 0;
-		pack->ackno = htonl(1);
-		pack->seqno = htonl(s->seqnum);
-		//strcpy(pack->data, senderbuffer);
+	packet_t* pack = malloc(sizeof(packet_t));
+	pack->cksum = 0;
+	pack->ackno = htonl(1);
+	pack->seqno = htonl(s->seqnum);
+	//strcpy(pack->data, senderbuffer);
 
 	while (r>0) {
 		pack->data[dataindex]=*(s->senderbuffer);
-		r = conn_input(s->c, (void *)(s->senderbuffer), sizeof(char));
+		fprintf(stderr,"\nintermediate: %c",*(s->senderbuffer));
+		r = conn_input(s->c, (void *)(s->senderbuffer), 1);
 		dataindex++;
 		if (dataindex==500) {
 			pack->len = htons(12+sizeof(char)*strlen(pack->data));
@@ -163,7 +185,7 @@ rel_read (rel_t *s)
 			conn_sendpkt(s->c, pack, sizeof(packet_t));
 			s->seqnum++;
 			//s->senderbuffer[0]="\0";
-			free(pack);
+			//free(pack);
 			pack = malloc(sizeof(packet_t));
 			pack->cksum = 0;
 			pack->ackno = htonl(1);
@@ -171,17 +193,22 @@ rel_read (rel_t *s)
 			dataindex=0;
 		}
 	}
+	if (r==-1) {
+		fprintf(stderr,"eofffffffffffffffffffffffffffffffff");
+		rel_sendeof(s);
+		rel_destroy(s);
+		return;
+	}
 	//fprintf(stderr, "%s", pack->data);
-	pack->data[dataindex]='\0';
+	//pack->data[dataindex]='\0';
 	pack->len = htons(12+sizeof(char)*strlen(pack->data));
 	pack->cksum = cksum(pack, ntohs(pack->len));
 	s->acked=0;
 	conn_sendpkt(s->c, pack, sizeof(packet_t));
-	free(pack);
+	//free(pack);
 	s->seqnum++;
-	if (r==-1) {
-		//handle EOF packet
-	}
+	
+	
 	//fprintf(stderr, "\n");
 }
 
