@@ -184,8 +184,16 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 {
 	//fprintf(stderr, "\nrecvpkt: %s\n", pkt->data);
 	//fprintf(stderr, "my window size is %d", r->rec_sw->rws);
-	
-	if (ntohs(pkt->len)==8) {
+	// Still need check for corrupted packet with checksum
+	int checksum = pkt->checksum;
+	int pkt_len = ntohs(pkt->len);
+	pkt->checksum = 0;
+	// Check for corrupted data
+	if(len < pkt_len || (cksum(pkt, pkt_len) != checksum)){
+		//drop pack
+		return; 
+	}
+	else if (ntohs(pkt->len)==8) {
 		//fprintf(stderr,"ackkkkkkkkkkkkkk");
 		r->acked=1;
 	}
