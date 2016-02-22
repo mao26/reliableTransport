@@ -36,7 +36,7 @@ struct reliable_state {
   rel_t **prev;
 
   conn_t *c;			/* This is the connection object */
-
+  packet_t * packet;
   /* Add your own data fields below this */
   int seqnum;
   char* senderbuffer;
@@ -86,6 +86,7 @@ rel_create (conn_t *c, const struct sockaddr_storage *ss,
   /* Do any other initialization you need here */
 
   /*init our packet information*/
+  r->packet = malloc(sizeof(packet_t));
   r->seqnum = 1;
   r->senderbuffer = malloc(sizeof(char));
   r->receiverbuffer = malloc(sizeof(char));
@@ -119,6 +120,7 @@ rel_destroy (rel_t *r)
   /* Free any other allocated memory here */
   free(r->senderbuffer);
   free(r->receiverbuffer);
+  free(r->packet);
 }
 
 /* Signal Handler for SIGINT */
@@ -175,6 +177,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 {
 	//fprintf(stderr, "\nrecvpkt: %s\n", pkt->data);
 	//fprintf(stderr, "my window size is %d", r->rec_sw->rws);
+	
 	if (ntohs(pkt->len)==8) {
 		//fprintf(stderr,"ackkkkkkkkkkkkkk");
 		r->acked=1;
@@ -194,25 +197,22 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	} else if(r->rec_sw->lfr < r->seqnum && r->seqnum <= r->rec_sw->laf)
 	{
 		//frame is accepted
-	}
 		rel_output(r);
 		int dataindex = 0;
 		//fprintf(stderr,"\nreceiving::::::::: %d \n",(ntohs(pkt->len)));
 		fprintf(stderr,"\nwindow size:: %d \n",r->rec_sw->rws);
-		while (dataindex<((ntohs(pkt->len)-12)/sizeof(char))) {
-			*(r->receiverbuffer) = pkt->data[dataindex];
-			conn_output(r->c, (void *)(r->receiverbuffer), sizeof(char));
-			dataindex++;
-		}
-		//fprintf(stderr,"\nconn_bufspace %d \n", conn_bufspace(r->c));
 		if(r->seqnum <= r->seqNumToAck)
 		{
 			// all frames, even if higher number of packets have been received will be received and we send an ack
 			r->rec_sw->lfr = r->seqNumToAck;
 			r->rec_sw->laf = r->rec_sw->lfr + r->rec_sw->rws;
 			//not sure if seqNumToAck needs to be incremented
-		}
 		rel_sendack(r);
+}
+	}
+		
+		
+		
 	}
 }
 
@@ -257,6 +257,7 @@ rel_read (rel_t *s)
 			pack->ackno = htonl(1);
 			pack->seqno = htonl(s->seqnum);
 			dataindex=0;
+			//s->packet = pack;
 		}
 	}
 	if (r==-1) {
@@ -270,6 +271,7 @@ rel_read (rel_t *s)
 	pack->len = htons(12+sizeof(char)*strlen(pack->data));
 	pack->cksum = cksum(pack, ntohs(pack->len));
 	s->acked=0;
+	s->packet = pack;
 	conn_sendpkt(s->c, pack, sizeof(packet_t));
 	//free(pack);
 	s->seqnum++;
@@ -289,5 +291,6 @@ void
 rel_timer ()
 {
   /* Retransmit any packets that need to be retransmitted */
+	fprintf(stderr, "hello%s\n", rel_list->packet->data);
 	
 }
