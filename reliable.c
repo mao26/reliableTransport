@@ -12,8 +12,10 @@
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <netinet/in.h>
-
+#include <signal.h>
 #include "rlib.h"
+
+static int quit = 0;
 
 struct rec_slidingWindow {
 	int rws; // upper boaund on no. of out-of-order frames that the receiver is willing to accept
@@ -119,6 +121,17 @@ rel_destroy (rel_t *r)
   free(r->receiverbuffer);
 }
 
+/* Signal Handler for SIGINT */
+void sigintHandler(int sig_num)
+{
+    //signal(SIGINT, sigintHandler);
+	if (quit==1) {
+		exit(0);
+	}
+    fprintf(stderr, "\n Cannot be terminated using Ctrl+C \n");
+    quit=1;
+    //fflush(stdout);
+}
 
 /* This function only gets called when the process is running as a
  * server and must handle connections from multiple clients.  You have
@@ -160,7 +173,8 @@ rel_sendeof(rel_t *r) {
 void
 rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 {
-	//fprintf(stderr, "recvpkt: %s", pkt->data);
+	//fprintf(stderr, "\nrecvpkt: %s\n", pkt->data);
+	//fprintf(stderr, "my window size is %d", r->rec_sw->rws);
 	if (ntohs(pkt->len)==8) {
 		//fprintf(stderr,"ackkkkkkkkkkkkkk");
 		r->acked=1;
@@ -183,6 +197,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	}
 		rel_output(r);
 		int dataindex = 0;
+		//fprintf(stderr,"\nreceiving::::::::: %d \n",(ntohs(pkt->len)));
 		fprintf(stderr,"\nwindow size:: %d \n",r->rec_sw->rws);
 		while (dataindex<((ntohs(pkt->len)-12)/sizeof(char))) {
 			*(r->receiverbuffer) = pkt->data[dataindex];
@@ -205,11 +220,15 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 void
 rel_read (rel_t *s)
 {
+	if (quit==0) {
+		signal(SIGINT, sigintHandler);
+	}
+
 	int r = conn_input(s->c, (void *)(s->senderbuffer), sizeof(char));
 	if (r==-1) {
 		fprintf(stderr,"eofffffffffffffffffffffff");
 		rel_sendeof(s);
-		rel_destroy(s);
+		//rel_destroy(s);
 		return;
 	}
 	int dataindex = 0;
@@ -228,6 +247,7 @@ rel_read (rel_t *s)
 			pack->len = htons(12+sizeof(char)*strlen(pack->data));
 			pack->cksum = cksum(pack, ntohs(pack->len));
 			s->acked=0;
+			//fprintf(stderr, "\nsendpkt: %s\n", pack->data);
 			conn_sendpkt(s->c, pack, sizeof(packet_t));
 			s->seqnum++;
 			//s->senderbuffer[0]="\0";
@@ -242,10 +262,10 @@ rel_read (rel_t *s)
 	if (r==-1) {
 		fprintf(stderr,"eofffffffffffffffffffffffffffffffff");
 		rel_sendeof(s);
-		rel_destroy(s);
+		//rel_destroy(s);
 		return;
 	}
-	//fprintf(stderr, "%s", pack->data);
+	//fprintf(stderr, "\nsendpkt: %s\n", pack->data);
 	//pack->data[dataindex]='\0';
 	pack->len = htons(12+sizeof(char)*strlen(pack->data));
 	pack->cksum = cksum(pack, ntohs(pack->len));
