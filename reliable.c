@@ -150,7 +150,7 @@ void sigintHandler(int sig_num)
 	//fflush(stdout);
 }
 
-int iterPackNAdd(packet_t * pack, rel_t * s)
+int iter_PackNAdd(packet_t * pack, rel_t * s)
 {
 	struct packetnode* current = s->send_sw->head;
 	struct packetnode* prev = NULL;
@@ -198,13 +198,13 @@ rel_demux (const struct config_common *cc,
 
 void
 rel_sendack(rel_t *r) {
-	ackpack* ackpack = malloc(sizeof(ackpack));
+	struct ack_packet* ackpack = malloc(sizeof(struct ack_packet));
 	ackpack->cksum = 0;
-	acknum++; //Not sure if this is necessary
+	r->acknum++; //Not sure if this is necessary
 	ackpack->ackno = htonl(r->acknum);
 	ackpack->len = htons(8); //not sure if this is correct
 	ackpack->cksum = cksum(ackpack, ntohs(ackpack->len));
-	conn_sendpkt(r->c, ackpack, sizeof(ackpack));
+	//conn_sendpkt(r->c, ackpack, sizeof(ack_packet));
 }
 void
 rel_sendeof(rel_t *r) {
@@ -224,11 +224,11 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	//fprintf(stderr, "\nrecvpkt: %s\n", pkt->data);
 	//fprintf(stderr, "my window size is %d", r->rec_sw->rws);
 	// Still need check for corrupted packet with checksum
-	int checksum = pkt->checksum;
+	int checksum = pkt->cksum;
 	int pkt_len = ntohs(pkt->len);
-	pkt->checksum = 0;
+	pkt->cksum = 0;
 	// Check for corrupted data
-	if (len < pkt_len || (cksum(pkt, pkt_len) != checksum)) {
+	if (n < pkt_len || (cksum(pkt, pkt_len) != checksum)) {
 		//drop pack
 		return;
 	}
@@ -252,7 +252,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 		{
 			//frame is accepted
 			rel_output(r);
-			int dataindex = 0;
+			//int dataindex = 0;
 			//fprintf(stderr,"\nreceiving::::::::: %d \n",(ntohs(pkt->len)));
 			fprintf(stderr, "\nwindow size:: %d \n", r->rec_sw->rws);
 			if (pkt->seqno <= r->seqNumToAck)
@@ -301,7 +301,7 @@ rel_read (rel_t *s)
 			pack->cksum = cksum(pack, ntohs(pack->len));
 			s->acked = 0;
 			//fprintf(stderr, "\nsendpkt: %s\n", pack->data);
-			if (iterPackNAdd(pack, s) == 0) {
+			if (iter_PackNAdd(pack, s) == 0) {
 				fprintf(stderr, "head of send_sw: %s", s->send_sw->head->packet->data);
 				return;
 			}
@@ -329,7 +329,7 @@ rel_read (rel_t *s)
 	pack->cksum = cksum(pack, ntohs(pack->len));
 	s->acked = 0;
 	//conn_sendpkt(s->c, pack, sizeof(packet_t));
-	int notfull = iterPackNAdd(pack, s);
+	int notfull = iter_PackNAdd(pack, s);
 	fprintf(stderr, "head of send_sw: %s", s->send_sw->head->packet->data);
 	if (notfull == 0) {
 		return;
