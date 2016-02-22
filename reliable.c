@@ -167,13 +167,13 @@ rel_demux (const struct config_common *cc,
 
 void
 rel_sendack(rel_t *r) {
-	packet_t* ackpack = malloc(sizeof(packet_t));
+	ackpack* ackpack = malloc(sizeof(ackpack));
 	ackpack->cksum = 0;
-	r->acknum++;
+	acknum++; //Not sure if this is necessary
 	ackpack->ackno = htonl(r->acknum);
 	ackpack->len = htons(8); //not sure if this is correct
 	ackpack->cksum = cksum(ackpack, ntohs(ackpack->len));
-	conn_sendpkt(r->c, ackpack, sizeof(packet_t));
+	conn_sendpkt(r->c, ackpack, sizeof(ackpack));
 }
 void
 rel_sendeof(rel_t *r) {
@@ -203,7 +203,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	}
 	else if (ntohs(pkt->len)==8) {
 		//fprintf(stderr,"ackkkkkkkkkkkkkk");
-		r->acked=1;
+		
 	}
 	else if (ntohs(pkt->len)==12) {
 		rel_sendack(r);
