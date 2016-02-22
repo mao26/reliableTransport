@@ -43,23 +43,23 @@ struct send_slidingWindow {
 
 
 struct reliable_state {
-  rel_t *next;			/* Linked list for traversing all connections */
-  rel_t **prev;
+	rel_t *next;			/* Linked list for traversing all connections */
+	rel_t **prev;
 
-  conn_t *c;			/* This is the connection object */
-  packet_t * packet;
-  /* Add your own data fields below this */
-  int seqnum;
-  char* senderbuffer;
-  char* receiverbuffer;
-  int acknum;
-  int acked;
-  int seqNumToAck; // largest seqNum not yet ack
-   // so if(seqNum <= seqNumToAck then frame is received
+	conn_t *c;			/* This is the connection object */
+	packet_t * packet;
+	/* Add your own data fields below this */
+	int seqnum;
+	char* senderbuffer;
+	char* receiverbuffer;
+	int acknum;
+	int acked;
+	int seqNumToAck; // largest seqNum not yet ack
+	// so if(seqNum <= seqNumToAck then frame is received
 
 	/*bc rel_t gets passed btw all functions it should keep track of our sliding windows*/
-  struct send_slidingWindow * send_sw;
-  struct rec_slidingWindow * rec_sw;
+	struct send_slidingWindow * send_sw;
+	struct rec_slidingWindow * rec_sw;
 };
 rel_t *rel_list;
 
@@ -70,84 +70,84 @@ rel_t *rel_list;
  * rel_demux.) */
 rel_t *
 rel_create (conn_t *c, const struct sockaddr_storage *ss,
-	    const struct config_common *cc)
+            const struct config_common *cc)
 {
-  rel_t *r;
+	rel_t *r;
 
 
-  r = xmalloc (sizeof (*r));
-  memset (r, 0, sizeof (*r));
+	r = xmalloc (sizeof (*r));
+	memset (r, 0, sizeof (*r));
 
-  if (!c) {
-    c = conn_create (r, ss);
-    if (!c) {
-      free (r);
-      return NULL;
-    }
-  }
+	if (!c) {
+		c = conn_create (r, ss);
+		if (!c) {
+			free (r);
+			return NULL;
+		}
+	}
 
-  r->c = c;
-  r->next = rel_list;
-  r->prev = &rel_list;
-  if (rel_list)
-    rel_list->prev = &r->next;
-  rel_list = r;
+	r->c = c;
+	r->next = rel_list;
+	r->prev = &rel_list;
+	if (rel_list)
+		rel_list->prev = &r->next;
+	rel_list = r;
 
-  //fprintf(stderr,"rel_create\n");
-  /* Do any other initialization you need here */
+	//fprintf(stderr,"rel_create\n");
+	/* Do any other initialization you need here */
 
-  /*init our packet information*/
-  r->packet = malloc(sizeof(packet_t));
-  r->seqnum = 1;
-  r->senderbuffer = malloc(sizeof(char));
-  r->receiverbuffer = malloc(sizeof(char));
-  r->acknum = 1;
-  r->acked = 0;
+	/*init our packet information*/
+	r->packet = malloc(sizeof(packet_t));
+	r->seqnum = 1;
+	r->senderbuffer = malloc(sizeof(char));
+	r->receiverbuffer = malloc(sizeof(char));
+	r->acknum = 1;
+	r->acked = 0;
 
-  /*init our sliding windows*/
-  r->rec_sw = xmalloc(sizeof(struct send_slidingWindow));
-  r->send_sw = xmalloc(sizeof(struct rec_slidingWindow));
-  r->rec_sw->rws = cc->window; //window size
-  r->rec_sw->laf = r->seqnum + r->rec_sw->rws; //last acceptable frame
-  //will be our window size plus last seqnum accepted
-  r->rec_sw->lfr = 0; //no frames recieved
-  r->send_sw->sws = 4;//cc->window; //window size
-  r->send_sw->lar = 0; //no acks received
-  r->send_sw->lfs = 0; //no frames sent so far
-  r->send_sw->lfs_min_lar = r->send_sw->lfs - r->send_sw->lar;
-  r->rec_sw->laf_min_lfr = r->rec_sw->laf - r->rec_sw->lfr;
-  r->rec_sw->head = malloc(sizeof(struct packetnode));
-  r->send_sw->head = malloc(sizeof(struct packetnode));
-  r->send_sw->head->length = 0;
-  r->rec_sw->head->length = 0;
-  return r;
+	/*init our sliding windows*/
+	r->rec_sw = xmalloc(sizeof(struct send_slidingWindow));
+	r->send_sw = xmalloc(sizeof(struct rec_slidingWindow));
+	r->rec_sw->rws = cc->window; //window size
+	r->rec_sw->laf = r->seqnum + r->rec_sw->rws; //last acceptable frame
+	//will be our window size plus last seqnum accepted
+	r->rec_sw->lfr = 0; //no frames recieved
+	r->send_sw->sws = 4;//cc->window; //window size
+	r->send_sw->lar = 0; //no acks received
+	r->send_sw->lfs = 0; //no frames sent so far
+	r->send_sw->lfs_min_lar = r->send_sw->lfs - r->send_sw->lar;
+	r->rec_sw->laf_min_lfr = r->rec_sw->laf - r->rec_sw->lfr;
+	r->rec_sw->head = malloc(sizeof(struct packetnode));
+	r->send_sw->head = malloc(sizeof(struct packetnode));
+	r->send_sw->head->length = 0;
+	r->rec_sw->head->length = 0;
+	return r;
 }
 
 void
 rel_destroy (rel_t *r)
 {
-  if (r->next)
-    r->next->prev = r->prev;
-  *r->prev = r->next;
-  conn_destroy (r->c);
+	if (r->next)
+		r->next->prev = r->prev;
+	*r->prev = r->next;
+	conn_destroy (r->c);
 
-  //fprintf(stderr,"rel_destroy\n");
-  /* Free any other allocated memory here */
-  free(r->senderbuffer);
-  free(r->receiverbuffer);
-  free(r->packet);
+	//fprintf(stderr,"rel_destroy\n");
+	/* Free any other allocated memory here */
+	free(r->senderbuffer);
+	free(r->receiverbuffer);
+	free(r->packet);
 }
 
 /* Signal Handler for SIGINT */
 void sigintHandler(int sig_num)
 {
-    //signal(SIGINT, sigintHandler);
-	if (quit==1) {
+	//signal(SIGINT, sigintHandler);
+	if (quit == 1) {
 		exit(0);
 	}
-    fprintf(stderr, "\n Cannot be terminated using Ctrl+C \n");
-    quit=1;
-    //fflush(stdout);
+	fprintf(stderr, "\n Cannot be terminated using Ctrl+C \n");
+	quit = 1;
+	//fflush(stdout);
 }
 
 int iterPackNAdd(packet_t * pack, rel_t * s)
@@ -156,26 +156,26 @@ int iterPackNAdd(packet_t * pack, rel_t * s)
 	struct packetnode* prev = NULL;
 	int count = 0;
 	//if(s->send_sw->head->packet == NULL)
-	//{		
+	//{
 	//	return;
-	//} 
-	while(current != NULL)
+	//}
+	while (current != NULL)
 	{
 		prev = current;
-		current = current -> next; 
+		current = current -> next;
 		count++;
 	}
 	if (count >= s->send_sw->sws) {
 		return 0;
 	}
 	current = malloc(sizeof(struct packetnode));
-	current->next=NULL;
-	current->packet=pack;
-	if (prev==NULL) {
-		s->send_sw->head=current;
+	current->next = NULL;
+	current->packet = pack;
+	if (prev == NULL) {
+		s->send_sw->head = current;
 	}
 	else {
-		fprintf(stderr,"end of sw: %s",prev->packet->data);
+		fprintf(stderr, "end of sw: %s", prev->packet->data);
 		prev->next = current;
 	}
 	return 1;
@@ -191,8 +191,8 @@ int iterPackNAdd(packet_t * pack, rel_t * s)
  */
 void
 rel_demux (const struct config_common *cc,
-	   const struct sockaddr_storage *ss,
-	   packet_t *pkt, size_t len)
+           const struct sockaddr_storage *ss,
+           packet_t *pkt, size_t len)
 {
 }
 
@@ -208,14 +208,14 @@ rel_sendack(rel_t *r) {
 }
 void
 rel_sendeof(rel_t *r) {
-		packet_t* eofpack = malloc(sizeof(packet_t));
-		eofpack->cksum = 0;
-		eofpack->ackno = htonl(r->acknum);
-		eofpack->len = htons(12); //not sure if this is correct
-		eofpack->seqno = htonl(r->seqnum);
-		eofpack->cksum = cksum(eofpack, ntohs(eofpack->len));
-		conn_sendpkt(r->c, eofpack, sizeof(packet_t));
-		r->seqnum++;
+	packet_t* eofpack = malloc(sizeof(packet_t));
+	eofpack->cksum = 0;
+	eofpack->ackno = htonl(r->acknum);
+	eofpack->len = htons(12); //not sure if this is correct
+	eofpack->seqno = htonl(r->seqnum);
+	eofpack->cksum = cksum(eofpack, ntohs(eofpack->len));
+	conn_sendpkt(r->c, eofpack, sizeof(packet_t));
+	r->seqnum++;
 }
 
 void
@@ -228,58 +228,58 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	int pkt_len = ntohs(pkt->len);
 	pkt->checksum = 0;
 	// Check for corrupted data
-	if(len < pkt_len || (cksum(pkt, pkt_len) != checksum)){
+	if (len < pkt_len || (cksum(pkt, pkt_len) != checksum)) {
 		//drop pack
-		return; 
+		return;
 	}
-	else if (ntohs(pkt->len)==8) {
+	else if (ntohs(pkt->len) == 8) {
 		//fprintf(stderr,"ackkkkkkkkkkkkkk");
-		
+
 	}
-	else if (ntohs(pkt->len)==12) {
+	else if (ntohs(pkt->len) == 12) {
 		rel_sendack(r);
-		conn_output(r->c,(void *)(r->receiverbuffer),0);
+		conn_output(r->c, (void *)(r->receiverbuffer), 0);
 		//rel_destroy(r);
 		return;
 	}
-	else if (ntohs(pkt->len)>12) {
-	if(pkt->seqno <= r->rec_sw->lfr || pkt->seqno > r->rec_sw->laf)
-	{
-		//frame is outside rec window size-rws and it is 
-		//discarded 
-		//may need to retransmitt
-	} else if(r->rec_sw->lfr < pkt->seqno && pkt->seqno <= r->rec_sw->laf)
-	{
-		//frame is accepted
-		rel_output(r);
-		int dataindex = 0;
-		//fprintf(stderr,"\nreceiving::::::::: %d \n",(ntohs(pkt->len)));
-		fprintf(stderr,"\nwindow size:: %d \n",r->rec_sw->rws);
-		if(pkt->seqno <= r->seqNumToAck)
+	else if (ntohs(pkt->len) > 12) {
+		if (pkt->seqno <= r->rec_sw->lfr || pkt->seqno > r->rec_sw->laf)
 		{
-			// all frames, even if higher number of packets have been received will be received and we send an ack
-			r->rec_sw->lfr = r->seqNumToAck;
-			r->rec_sw->laf = r->rec_sw->lfr + r->rec_sw->rws;
-			//not sure if seqNumToAck needs to be incremented
-		rel_sendack(r);
-}
-	}
-		
-		
-		
+			//frame is outside rec window size-rws and it is
+			//discarded
+			//may need to retransmitt
+		} else if (r->rec_sw->lfr < pkt->seqno && pkt->seqno <= r->rec_sw->laf)
+		{
+			//frame is accepted
+			rel_output(r);
+			int dataindex = 0;
+			//fprintf(stderr,"\nreceiving::::::::: %d \n",(ntohs(pkt->len)));
+			fprintf(stderr, "\nwindow size:: %d \n", r->rec_sw->rws);
+			if (pkt->seqno <= r->seqNumToAck)
+			{
+				// all frames, even if higher number of packets have been received will be received and we send an ack
+				r->rec_sw->lfr = r->seqNumToAck;
+				r->rec_sw->laf = r->rec_sw->lfr + r->rec_sw->rws;
+				//not sure if seqNumToAck needs to be incremented
+				rel_sendack(r);
+			}
+		}
+
+
+
 	}
 }
 
 void
 rel_read (rel_t *s)
 {
-	if (quit==0) {
+	if (quit == 0) {
 		signal(SIGINT, sigintHandler);
 	}
 
 	int r = conn_input(s->c, (void *)(s->senderbuffer), sizeof(char));
-	if (r==-1) {
-		fprintf(stderr,"eofffffffffffffffffffffff");
+	if (r == -1) {
+		fprintf(stderr, "eofffffffffffffffffffffff");
 		rel_sendeof(s);
 		//rel_destroy(s);
 		return;
@@ -291,18 +291,18 @@ rel_read (rel_t *s)
 	pack->seqno = htonl(s->seqnum);
 	//strcpy(pack->data, senderbuffer);
 
-	while (r>0) {
-		pack->data[dataindex]=*(s->senderbuffer);
+	while (r > 0) {
+		pack->data[dataindex] = *(s->senderbuffer);
 		//fprintf(stderr,"\nintermediate: %c",*(s->senderbuffer));
 		r = conn_input(s->c, (void *)(s->senderbuffer), 1);
 		dataindex++;
-		if (dataindex==500) {
-			pack->len = htons(12+sizeof(char)*strlen(pack->data));
+		if (dataindex == 500) {
+			pack->len = htons(12 + sizeof(char) * strlen(pack->data));
 			pack->cksum = cksum(pack, ntohs(pack->len));
-			s->acked=0;
+			s->acked = 0;
 			//fprintf(stderr, "\nsendpkt: %s\n", pack->data);
-			if(iterPackNAdd(pack,s)==0) {
-				fprintf(stderr,"head of send_sw: %s",s->send_sw->head->packet->data);
+			if (iterPackNAdd(pack, s) == 0) {
+				fprintf(stderr, "head of send_sw: %s", s->send_sw->head->packet->data);
 				return;
 			}
 			////conn_sendpkt(s->c, pack, sizeof(packet_t));
@@ -313,31 +313,31 @@ rel_read (rel_t *s)
 			pack->cksum = 0;
 			pack->ackno = htonl(1);
 			pack->seqno = htonl(s->seqnum);
-			dataindex=0;
+			dataindex = 0;
 			//s->packet = pack;
 		}
 	}
-	if (r==-1) {
-		fprintf(stderr,"eofffffffffffffffffffffffffffffffff");
+	if (r == -1) {
+		fprintf(stderr, "eofffffffffffffffffffffffffffffffff");
 		rel_sendeof(s);
 		//rel_destroy(s);
 		return;
 	}
 	//fprintf(stderr, "\nsendpkt: %s\n", pack->data);
 	//pack->data[dataindex]='\0';
-	pack->len = htons(12+sizeof(char)*strlen(pack->data));
+	pack->len = htons(12 + sizeof(char) * strlen(pack->data));
 	pack->cksum = cksum(pack, ntohs(pack->len));
-	s->acked=0;
+	s->acked = 0;
 	//conn_sendpkt(s->c, pack, sizeof(packet_t));
-	int notfull =iterPackNAdd(pack,s);
-	fprintf(stderr,"head of send_sw: %s",s->send_sw->head->packet->data);
-	if (notfull==0){
+	int notfull = iterPackNAdd(pack, s);
+	fprintf(stderr, "head of send_sw: %s", s->send_sw->head->packet->data);
+	if (notfull == 0) {
 		return;
 	}
 	//free(pack);
 	s->seqnum++;
-	
-	
+
+
 	//fprintf(stderr, "\n");
 }
 
@@ -351,7 +351,7 @@ rel_output (rel_t *r)
 void
 rel_timer ()
 {
-  /* Retransmit any packets that need to be retransmitted */
+	/* Retransmit any packets that need to be retransmitted */
 	//fprintf(stderr, "hello%s\n", rel_list->packet->data);
-	
+
 }
