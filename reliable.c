@@ -107,7 +107,7 @@ rel_create (conn_t *c, const struct sockaddr_storage *ss,
   r->rec_sw->laf = r->seqnum + r->rec_sw->rws; //last acceptable frame
   //will be our window size plus last seqnum accepted
   r->rec_sw->lfr = 0; //no frames recieved
-  r->send_sw->sws = cc->window; //window size
+  r->send_sw->sws = 4;//cc->window; //window size
   r->send_sw->lar = 0; //no acks received
   r->send_sw->lfs = 0; //no frames sent so far
   r->send_sw->lfs_min_lar = r->send_sw->lfs - r->send_sw->lar;
@@ -140,6 +140,37 @@ void sigintHandler(int sig_num)
     fprintf(stderr, "\n Cannot be terminated using Ctrl+C \n");
     quit=1;
     //fflush(stdout);
+}
+
+int iterPackNAdd(packet_t * pack, rel_t * s)
+{
+	struct packetnode* current = s->send_sw->head;
+	struct packetnode* prev = NULL;
+	int count = 0;
+	//if(s->send_sw->head->packet == NULL)
+	//{		
+	//	return;
+	//} 
+	while(current != NULL)
+	{
+		prev = current;
+		current = current -> next; 
+		count++;
+	}
+	if (count >= s->send_sw->sws) {
+		return 0;
+	}
+	current = malloc(sizeof(struct packetnode));
+	current->next=NULL;
+	current->packet=pack;
+	if (prev==NULL) {
+		s->send_sw->head=current;
+	}
+	else {
+		fprintf(stderr,"end of sw: %s",prev->packet->data);
+		prev->next = current;
+	}
+	return 1;
 }
 
 /* This function only gets called when the process is running as a
@@ -223,7 +254,6 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	}
 }
 
-
 void
 rel_read (rel_t *s)
 {
@@ -255,7 +285,11 @@ rel_read (rel_t *s)
 			pack->cksum = cksum(pack, ntohs(pack->len));
 			s->acked=0;
 			//fprintf(stderr, "\nsendpkt: %s\n", pack->data);
-			conn_sendpkt(s->c, pack, sizeof(packet_t));
+			if(iterPackNAdd(pack,s)==0) {
+				fprintf(stderr,"head of send_sw: %s",s->send_sw->head->packet->data);
+				return;
+			}
+			////conn_sendpkt(s->c, pack, sizeof(packet_t));
 			s->seqnum++;
 			//s->senderbuffer[0]="\0";
 			//free(pack);
@@ -279,26 +313,17 @@ rel_read (rel_t *s)
 	pack->cksum = cksum(pack, ntohs(pack->len));
 	s->acked=0;
 	s->packet = pack;
-	conn_sendpkt(s->c, pack, sizeof(packet_t));
+	//conn_sendpkt(s->c, pack, sizeof(packet_t));
+	int notfull =iterPackNAdd(pack,s);
+	fprintf(stderr,"head of send_sw: %s",s->send_sw->head->packet->data);
+	if (notfull==0){
+		return;
+	}
 	//free(pack);
 	s->seqnum++;
 	
 	
 	//fprintf(stderr, "\n");
-}
-
-void iterPackNAdd(packet_t * pack, rel_t * s)
-{
-	if(s->send_sw->head->packet == NULL)
-	{
-		
-		return;
-	} 
-	while(s->send_sw->head -> next -> packet != NULL)
-	{
-		s->send_sw->head = s->send_sw->head -> next; 
-	}
-	s->send_sw->head->next->packet = pack;
 }
 
 void
@@ -312,6 +337,6 @@ void
 rel_timer ()
 {
   /* Retransmit any packets that need to be retransmitted */
-	fprintf(stderr, "hello%s\n", rel_list->packet->data);
+	//fprintf(stderr, "hello%s\n", rel_list->packet->data);
 	
 }
