@@ -16,6 +16,13 @@
 #include "rlib.h"
 
 static int quit = 0;
+void iterPackNAdd(packet_t * pack, rel_t * s);
+
+struct packetnode {
+	int length;
+	packet_t* packet;
+	struct packetnode* next;
+};
 
 struct rec_slidingWindow {
 	int rws; // upper boaund on no. of out-of-order frames that the receiver is willing to accept
@@ -33,10 +40,7 @@ struct send_slidingWindow {
 	struct packetnode* head;
 };
 
-struct packetnode {
-	packet_t* packet;
-	struct packetnode* next;
-};
+
 
 struct reliable_state {
   rel_t *next;			/* Linked list for traversing all connections */
@@ -112,6 +116,10 @@ rel_create (conn_t *c, const struct sockaddr_storage *ss,
   r->send_sw->lfs = 0; //no frames sent so far
   r->send_sw->lfs_min_lar = r->send_sw->lfs - r->send_sw->lar;
   r->rec_sw->laf_min_lfr = r->rec_sw->laf - r->rec_sw->lfr;
+  r->rec_sw->head = malloc(sizeof(struct packetnode));
+  r->send_sw->head = malloc(sizeof(struct packetnode));
+  r->send_sw->head->length = 0;
+  r->rec_sw->head->length = 0;
   return r;
 }
 
@@ -215,8 +223,16 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 {
 	//fprintf(stderr, "\nrecvpkt: %s\n", pkt->data);
 	//fprintf(stderr, "my window size is %d", r->rec_sw->rws);
-	
-	if (ntohs(pkt->len)==8) {
+	// Still need check for corrupted packet with checksum
+	int checksum = pkt->checksum;
+	int pkt_len = ntohs(pkt->len);
+	pkt->checksum = 0;
+	// Check for corrupted data
+	if(len < pkt_len || (cksum(pkt, pkt_len) != checksum)){
+		//drop pack
+		return; 
+	}
+	else if (ntohs(pkt->len)==8) {
 		//fprintf(stderr,"ackkkkkkkkkkkkkk");
 		r->acked=1;
 	}
@@ -227,19 +243,19 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 		return;
 	}
 	else if (ntohs(pkt->len)>12) {
-	if(r->seqnum <= r->rec_sw->lfr || r->seqnum > r->rec_sw->laf)
+	if(pkt->seqno <= r->rec_sw->lfr || pkt->seqno > r->rec_sw->laf)
 	{
 		//frame is outside rec window size-rws and it is 
 		//discarded 
 		//may need to retransmitt
-	} else if(r->rec_sw->lfr < r->seqnum && r->seqnum <= r->rec_sw->laf)
+	} else if(r->rec_sw->lfr < pkt->seqno && pkt->seqno <= r->rec_sw->laf)
 	{
 		//frame is accepted
 		rel_output(r);
 		int dataindex = 0;
 		//fprintf(stderr,"\nreceiving::::::::: %d \n",(ntohs(pkt->len)));
 		fprintf(stderr,"\nwindow size:: %d \n",r->rec_sw->rws);
-		if(r->seqnum <= r->seqNumToAck)
+		if(pkt->seqno <= r->seqNumToAck)
 		{
 			// all frames, even if higher number of packets have been received will be received and we send an ack
 			r->rec_sw->lfr = r->seqNumToAck;
@@ -312,7 +328,6 @@ rel_read (rel_t *s)
 	pack->len = htons(12+sizeof(char)*strlen(pack->data));
 	pack->cksum = cksum(pack, ntohs(pack->len));
 	s->acked=0;
-	s->packet = pack;
 	//conn_sendpkt(s->c, pack, sizeof(packet_t));
 	int notfull =iterPackNAdd(pack,s);
 	fprintf(stderr,"head of send_sw: %s",s->send_sw->head->packet->data);
