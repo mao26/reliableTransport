@@ -15,7 +15,19 @@
 
 #include "rlib.h"
 
+struct rec_slidingWindow {
+	int rws; // upper boaund on no. of out-of-order frames that the receiver is willing to accept
+	int laf; // seqNum of largest acceptable frame
+	int lfr; // seqNum of last frame received
+	int laf_min_lfr; // laf - lfr <= rws
+};
 
+struct send_slidingWindow {
+	int sws; //upper bound on no. of unacked frames that sender can transmitt
+	int lar; // sequence of last ack received
+	int lfs; //last frame sent
+	int lfs_min_lar; // lfs - lar <= sws
+};
 
 struct reliable_state {
   rel_t *next;			/* Linked list for traversing all connections */
@@ -29,11 +41,12 @@ struct reliable_state {
   char* receiverbuffer;
   int acknum;
   int acked;
+
+	/*bc rel_t gets passed btw all functions it should keep track of our sliding windows*/
+  struct send_slidingWindow * send_sw;
+  struct rec_slidingWindow * rec_sw;
 };
 rel_t *rel_list;
-
-
-
 
 
 /* Creates a new reliable protocol session, returns NULL on failure.
@@ -45,6 +58,7 @@ rel_create (conn_t *c, const struct sockaddr_storage *ss,
 	    const struct config_common *cc)
 {
   rel_t *r;
+
 
   r = xmalloc (sizeof (*r));
   memset (r, 0, sizeof (*r));
@@ -66,11 +80,18 @@ rel_create (conn_t *c, const struct sockaddr_storage *ss,
 
   //fprintf(stderr,"rel_create\n");
   /* Do any other initialization you need here */
+
+  /*init our packet information*/
   r->seqnum = 1;
   r->senderbuffer = malloc(sizeof(char));
   r->receiverbuffer = malloc(sizeof(char));
   r->acknum = 1;
   r->acked = 0;
+
+  /*init our sliding windows*/
+  r->rec_sw = xmalloc(sizeof(struct send_slidingWindow));
+  r->send_sw = xmalloc(sizeof(struct rec_slidingWindow));
+  r->rec_sw->rws = cc->window;
   return r;
 }
 
@@ -130,6 +151,7 @@ void
 rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 {
 	//fprintf(stderr, "recvpkt: %s", pkt->data);
+	printf("my window size is %d", r->rec_sw->rws);
 	if (ntohs(pkt->len)==8) {
 		//fprintf(stderr,"ackkkkkkkkkkkkkk");
 		r->acked=1;
@@ -137,7 +159,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	else if (ntohs(pkt->len)==12) {
 		rel_sendack(r);
 		conn_output(r->c,(void *)(r->receiverbuffer),0);
-		rel_destroy(r);
+		//rel_destroy(r);
 		return;
 	}
 	else if (ntohs(pkt->len)>12) {
@@ -222,5 +244,5 @@ void
 rel_timer ()
 {
   /* Retransmit any packets that need to be retransmitted */
-
+	
 }
