@@ -22,6 +22,7 @@ struct rec_slidingWindow {
 	int laf; // seqNum of largest acceptable frame
 	int lfr; // seqNum of last frame received
 	int laf_min_lfr; // laf - lfr <= rws
+	struct packetnode* head;
 };
 
 struct send_slidingWindow {
@@ -29,6 +30,12 @@ struct send_slidingWindow {
 	int lar; // sequence of last ack received
 	int lfs; //last frame sent
 	int lfs_min_lar; // lfs - lar <= sws
+	struct packetnode* head;
+};
+
+struct packetnode {
+	packet_t* packet;
+	struct packetnode* next;
 };
 
 struct reliable_state {
