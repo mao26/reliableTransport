@@ -41,6 +41,8 @@ struct reliable_state {
   char* receiverbuffer;
   int acknum;
   int acked;
+  int seqNumToAck; // largest seqNum not yet ack
+   // so if(seqNum <= seqNumToAck then frame is received
 
 	/*bc rel_t gets passed btw all functions it should keep track of our sliding windows*/
   struct send_slidingWindow * send_sw;
@@ -135,13 +137,13 @@ rel_demux (const struct config_common *cc,
 
 void
 rel_sendack(rel_t *r) {
-		packet_t* ackpack = malloc(sizeof(packet_t));
-		ackpack->cksum = 0;
-		r->acknum++;
-		ackpack->ackno = htonl(r->acknum);
-		ackpack->len = htons(8); //not sure if this is correct
-		ackpack->cksum = cksum(ackpack, ntohs(ackpack->len));
-		conn_sendpkt(r->c, ackpack, sizeof(packet_t));
+	packet_t* ackpack = malloc(sizeof(packet_t));
+	ackpack->cksum = 0;
+	r->acknum++;
+	ackpack->ackno = htonl(r->acknum);
+	ackpack->len = htons(8); //not sure if this is correct
+	ackpack->cksum = cksum(ackpack, ntohs(ackpack->len));
+	conn_sendpkt(r->c, ackpack, sizeof(packet_t));
 }
 void
 rel_sendeof(rel_t *r) {
@@ -170,6 +172,15 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 		return;
 	}
 	else if (ntohs(pkt->len)>12) {
+	if(r->seqnum <= r->rec_sw->lfr || r->seqnum > r->rec_sw->laf)
+	{
+		//frame is outside rec window size-rws and it is 
+		//discarded 
+		//may need to retransmitt
+	} else if(r->rec_sw->lfr < r->seqnum && r->seqnum <= r->rec_sw->laf)
+	{
+		//frame is accepted
+	}
 		rel_output(r);
 		int dataindex = 0;
 		fprintf(stderr,"\nwindow size:: %d \n",r->rec_sw->rws);
@@ -179,6 +190,13 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 			dataindex++;
 		}
 		//fprintf(stderr,"\nconn_bufspace %d \n", conn_bufspace(r->c));
+		if(r->seqnum <= r->seqNumToAck)
+		{
+			// all frames, even if higher number of packets have been received will be received and we send an ack
+			r->rec_sw->lfr = r->seqNumToAck;
+			r->rec_sw->laf = r->rec_sw->lfr + r->rec_sw->rws;
+			//not sure if seqNumToAck needs to be incremented
+		}
 		rel_sendack(r);
 	}
 }
