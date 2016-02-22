@@ -137,7 +137,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	else if (ntohs(pkt->len)==12) {
 		rel_sendack(r);
 		conn_output(r->c,(void *)(r->receiverbuffer),0);
-		rel_destroy(r);
+		//rel_destroy(r);
 		return;
 	}
 	else if (ntohs(pkt->len)>12) {
