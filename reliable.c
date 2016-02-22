@@ -201,7 +201,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 		//frame is outside rec window size-rws and it is 
 		//discarded 
 		//may need to retransmitt
-	} else if(r->rec_sw->lfr < r->seqnum && r->seqnum <= r->rec_sw->laf)
+	} else if(r->rec_sw->lfr < pkt->seqno && pkt->seqno <= r->rec_sw->laf)
 	{
 		//frame is accepted
 		rel_output(r);
