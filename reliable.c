@@ -196,7 +196,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 		return;
 	}
 	else if (ntohs(pkt->len)>12) {
-	if(r->seqnum <= r->rec_sw->lfr || r->seqnum > r->rec_sw->laf)
+	if(pkt->seqno <= r->rec_sw->lfr || pkt->seqno > r->rec_sw->laf)
 	{
 		//frame is outside rec window size-rws and it is 
 		//discarded 
@@ -208,7 +208,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 		int dataindex = 0;
 		//fprintf(stderr,"\nreceiving::::::::: %d \n",(ntohs(pkt->len)));
 		fprintf(stderr,"\nwindow size:: %d \n",r->rec_sw->rws);
-		if(r->seqnum <= r->seqNumToAck)
+		if(pkt->seqno <= r->seqNumToAck)
 		{
 			// all frames, even if higher number of packets have been received will be received and we send an ack
 			r->rec_sw->lfr = r->seqNumToAck;
