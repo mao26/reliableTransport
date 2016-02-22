@@ -91,7 +91,15 @@ rel_create (conn_t *c, const struct sockaddr_storage *ss,
   /*init our sliding windows*/
   r->rec_sw = xmalloc(sizeof(struct send_slidingWindow));
   r->send_sw = xmalloc(sizeof(struct rec_slidingWindow));
-  r->rec_sw->rws = cc->window;
+  r->rec_sw->rws = cc->window; //window size
+  r->rec_sw->laf = r->seqnum + r->rec_sw->rws; //last acceptable frame
+  //will be our window size plus last seqnum accepted
+  r->rec_sw->lfr = 0; //no frames recieved
+  r->send_sw->sws = cc->window; //window size
+  r->send_sw->lar = 0; //no acks received
+  r->send_sw->lfs = 0; //no frames sent so far
+  r->send_sw->lfs_min_lar = r->send_sw->lfs - r->send_sw->lar;
+  r->rec_sw->laf_min_lfr = r->rec_sw->laf - r->rec_sw->lfr;
   return r;
 }
 
@@ -151,7 +159,6 @@ void
 rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 {
 	//fprintf(stderr, "recvpkt: %s", pkt->data);
-	printf("my window size is %d", r->rec_sw->rws);
 	if (ntohs(pkt->len)==8) {
 		//fprintf(stderr,"ackkkkkkkkkkkkkk");
 		r->acked=1;
@@ -165,7 +172,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	else if (ntohs(pkt->len)>12) {
 		rel_output(r);
 		int dataindex = 0;
-		fprintf(stderr,"\nreceiving::::::::: %d \n",(ntohs(pkt->len)));
+		fprintf(stderr,"\nwindow size:: %d \n",r->rec_sw->rws);
 		while (dataindex<((ntohs(pkt->len)-12)/sizeof(char))) {
 			*(r->receiverbuffer) = pkt->data[dataindex];
 			conn_output(r->c, (void *)(r->receiverbuffer), sizeof(char));
