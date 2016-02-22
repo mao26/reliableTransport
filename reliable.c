@@ -287,6 +287,20 @@ rel_read (rel_t *s)
 	//fprintf(stderr, "\n");
 }
 
+void iterPackNAdd(packet_t * pack, rel_t * s)
+{
+	if(s->send_sw->head->packet == NULL)
+	{
+		
+		return;
+	} 
+	while(s->send_sw->head -> next -> packet != NULL)
+	{
+		s->send_sw->head = s->send_sw->head -> next; 
+	}
+	s->send_sw->head->next->packet = pack;
+}
+
 void
 rel_output (rel_t *r)
 {

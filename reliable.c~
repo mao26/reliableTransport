@@ -22,6 +22,7 @@ struct rec_slidingWindow {
 	int laf; // seqNum of largest acceptable frame
 	int lfr; // seqNum of last frame received
 	int laf_min_lfr; // laf - lfr <= rws
+	struct packetnode* head;
 };
 
 struct send_slidingWindow {
@@ -29,6 +30,12 @@ struct send_slidingWindow {
 	int lar; // sequence of last ack received
 	int lfs; //last frame sent
 	int lfs_min_lar; // lfs - lar <= sws
+	struct packetnode* head;
+};
+
+struct packetnode {
+	packet_t* packet;
+	struct packetnode* next;
 };
 
 struct reliable_state {
@@ -177,6 +184,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 {
 	//fprintf(stderr, "\nrecvpkt: %s\n", pkt->data);
 	//fprintf(stderr, "my window size is %d", r->rec_sw->rws);
+	
 	if (ntohs(pkt->len)==8) {
 		//fprintf(stderr,"ackkkkkkkkkkkkkk");
 		r->acked=1;
@@ -196,25 +204,22 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	} else if(r->rec_sw->lfr < r->seqnum && r->seqnum <= r->rec_sw->laf)
 	{
 		//frame is accepted
-	}
 		rel_output(r);
 		int dataindex = 0;
 		//fprintf(stderr,"\nreceiving::::::::: %d \n",(ntohs(pkt->len)));
 		fprintf(stderr,"\nwindow size:: %d \n",r->rec_sw->rws);
-		while (dataindex<((ntohs(pkt->len)-12)/sizeof(char))) {
-			*(r->receiverbuffer) = pkt->data[dataindex];
-			conn_output(r->c, (void *)(r->receiverbuffer), sizeof(char));
-			dataindex++;
-		}
-		//fprintf(stderr,"\nconn_bufspace %d \n", conn_bufspace(r->c));
 		if(r->seqnum <= r->seqNumToAck)
 		{
 			// all frames, even if higher number of packets have been received will be received and we send an ack
 			r->rec_sw->lfr = r->seqNumToAck;
 			r->rec_sw->laf = r->rec_sw->lfr + r->rec_sw->rws;
 			//not sure if seqNumToAck needs to be incremented
-		}
 		rel_sendack(r);
+}
+	}
+		
+		
+		
 	}
 }
 
@@ -280,6 +285,20 @@ rel_read (rel_t *s)
 	
 	
 	//fprintf(stderr, "\n");
+}
+
+void iterPackNAdd(packet_t * pack, rel_t * s)
+{
+	if(s->send_sw->head->packet = NULL)
+	{
+		
+		return;
+	} 
+	while(s->send_sw->head -> next -> packet != NULL)
+	{
+		s->send_sw->head = s->send_sw->head -> next; 
+	}
+	s->send_sw->head->next->packet = pack;
 }
 
 void
