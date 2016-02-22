@@ -16,6 +16,13 @@
 #include "rlib.h"
 
 static int quit = 0;
+void iterPackNAdd(packet_t * pack, rel_t * s);
+
+struct packetnode {
+	int length;
+	packet_t* packet;
+	struct packetnode* next;
+};
 
 struct rec_slidingWindow {
 	int rws; // upper boaund on no. of out-of-order frames that the receiver is willing to accept
@@ -33,10 +40,7 @@ struct send_slidingWindow {
 	struct packetnode* head;
 };
 
-struct packetnode {
-	packet_t* packet;
-	struct packetnode* next;
-};
+
 
 struct reliable_state {
   rel_t *next;			/* Linked list for traversing all connections */
@@ -112,6 +116,10 @@ rel_create (conn_t *c, const struct sockaddr_storage *ss,
   r->send_sw->lfs = 0; //no frames sent so far
   r->send_sw->lfs_min_lar = r->send_sw->lfs - r->send_sw->lar;
   r->rec_sw->laf_min_lfr = r->rec_sw->laf - r->rec_sw->lfr;
+  r->rec_sw->head = malloc(sizeof(packetnode));
+  r->send_sw->head = malloc(sizeof(packetnode));
+  r->send_sw->head->length = 0;
+  r->rec_sw->head->length = 0;
   return r;
 }
 
@@ -278,7 +286,7 @@ rel_read (rel_t *s)
 	pack->len = htons(12+sizeof(char)*strlen(pack->data));
 	pack->cksum = cksum(pack, ntohs(pack->len));
 	s->acked=0;
-	s->packet = pack;
+	iterPackNAdd(pack, s);
 	conn_sendpkt(s->c, pack, sizeof(packet_t));
 	//free(pack);
 	s->seqnum++;
@@ -289,7 +297,7 @@ rel_read (rel_t *s)
 
 void iterPackNAdd(packet_t * pack, rel_t * s)
 {
-	if(s->send_sw->head->packet = NULL)
+	if(s->send_sw->head->packet == NULL)
 	{
 		
 		return;
