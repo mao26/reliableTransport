@@ -120,6 +120,7 @@ rel_create (conn_t *c, const struct sockaddr_storage *ss,
 	//r->send_sw->head = malloc(sizeof(struct packetnode));
 	//r->send_sw->head->length = 0;
 	//r->rec_sw->head->length = 0;
+	r-<seqNumToAck = 0;
 	return r;
 }
 
@@ -234,8 +235,8 @@ void
 rel_sendack(rel_t *r) {
 	struct ack_packet* ackpack = malloc(sizeof(struct ack_packet));
 	ackpack->cksum = 0;
-	r->acknum++; //Not sure if this is necessary
-	ackpack->ackno = htonl(r->acknum);
+	//r->acknum++; //Not sure if this is necessary
+	ackpack->ackno = htonl(r->seqNumToAck);
 	ackpack->len = htons(8); //not sure if this is correct
 	ackpack->cksum = cksum(ackpack, ntohs(ackpack->len));
 	//conn_sendpkt(r->c, ackpack, sizeof(ack_packet));
@@ -288,8 +289,8 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 			fprintf(stderr,"outside of rec window lfr=%d, laf=%d", r->rec_sw->lfr, r->rec_sw->laf);
 		} else if (r->rec_sw->lfr < pkt_seqno && pkt_seqno <= r->rec_sw->laf)
 		{
-
 			//frame is accepted
+			rec_PackNAdd(pkt, r);
 			rel_output(r);
 			//int dataindex = 0;
 			//fprintf(stderr,"\nreceiving::::::::: %d \n",(ntohs(pkt->len)));
