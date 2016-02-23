@@ -155,7 +155,7 @@ void sigintHandler(int sig_num)
 
 void rec_deletenodes(rel_t* r) {
 	//fprintf(stderr,"\ninitial seqno:%d, lfr:%d",ntohl(r->rec_sw->head->packet->seqno),r->rec_sw->lfr);
-	while(ntohl(r->rec_sw->head->packet->seqno) <= r->rec_sw->lfr) {
+	while (ntohl(r->rec_sw->head->packet->seqno) <= r->rec_sw->lfr) {
 		struct packetnode * temp = r->rec_sw->head;
 		r->rec_sw->head = r->rec_sw->head->next;
 		free(temp);
@@ -166,13 +166,13 @@ void rec_deletenodes(rel_t* r) {
 void update_rec_sw(rel_t* r) {
 	struct packetnode* runner = r->rec_sw->head;
 	int counter = r->rec_sw->lfr;
-	while (runner->next!=NULL && ntohl(runner->packet->seqno)==(counter+1)) {
+	while (runner->next != NULL && ntohl(runner->packet->seqno) == (counter + 1)) {
 		runner = runner->next;
 		counter++;
 	}
 	//fprintf(stderr,"seqno:%d, counter:%d",ntohl(runner->packet->seqno),counter);
-	r->seqNumToAck = counter+2;
-	r->rec_sw->lfr = (r->seqNumToAck)-2;
+	r->seqNumToAck = counter + 2;
+	r->rec_sw->lfr = (r->seqNumToAck) - 2;
 	r->rec_sw->laf = r->rec_sw->lfr + r->rec_sw->rws;
 	rec_deletenodes(r);
 }
@@ -180,12 +180,12 @@ void update_rec_sw(rel_t* r) {
 void retransmitSpecificPacket(rel_t * s, int seqnum)
 {
 	struct packetnode * current = s->send_sw->head;
-	if(current == NULL){
+	if (current == NULL) {
 		//fprintf(stderr, "you're asking to transmit a packet that doesn't exist");
 		return;
 	}
-	while(ntohl(current->packet->seqno) != seqnum){
-		if(current->next == NULL){
+	while (ntohl(current->packet->seqno) != seqnum) {
+		if (current->next == NULL) {
 			//fprintf(stderr, "you're asking to transmit a packet that doesn't exist");
 		}
 		current = current->next;
@@ -210,13 +210,13 @@ int iter_PackNAdd(packet_t * pack, rel_t * s)
 	}
 	//fprintf(stderr, "last frame sent: %d", s->send_sw->lfs);
 	if (count >= s->send_sw->sws) {
-		windowfull=pack;
+		windowfull = pack;
 		return 0;
 	}
 	current = malloc(sizeof(struct packetnode));
 	current->next = NULL;
 	current->packet = pack;
-	current->length = count+1;
+	current->length = count + 1;
 	if (prev == NULL) {
 		s->send_sw->head = current;
 	}
@@ -241,7 +241,7 @@ int rec_PackNAdd(packet_t * pack, rel_t * s)
 		current = current -> next;
 
 	}
-	if (prev!=NULL && (ntohl(prev->packet->seqno) == ntohl(pack->seqno))) {
+	if (prev != NULL && (ntohl(prev->packet->seqno) == ntohl(pack->seqno))) {
 		return 0;
 	}
 	//if (count >= s->rec_sw->rws) {
@@ -307,9 +307,9 @@ rel_sendeof(rel_t *r) {
 void send_deletenodes(rel_t* r) {
 	//fprintf(stderr,"deletenodes called");
 	//fprintf(stderr,"\ninitial seqno:%d, lar:%d",ntohl(r->send_sw->head->packet->seqno),r->send_sw->lar);
-	while(ntohl(r->send_sw->head->packet->seqno) < r->send_sw->lar) {
+	while (ntohl(r->send_sw->head->packet->seqno) < r->send_sw->lar) {
 		struct packetnode * temp = r->send_sw->head;
-		r->send_sw->head=r->send_sw->head->next;
+		r->send_sw->head = r->send_sw->head->next;
 		free(temp);
 		//fprintf(stderr,"\ndeleted send_sw head");
 	}
@@ -343,11 +343,14 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 		//fprintf(stderr, "dropped");
 		return;
 	}*/
-	else if (ntohs(pkt->len) == 8) {
+	else if (ntohs(pkt->len) == sizeof(struct ack_packet)) {
 		//fprintf(stderr,"ackkkkkkkkkkkkkk");
-		r->send_sw->lar=ntohl(pkt->ackno)-1;
-		send_deletenodes(r);
-		rel_read(r);
+		if (ntohl(pkt->ackno) > r->rec_sw->lar) {
+			//update lar
+			r->rec_sw->lar = ntohl(pkt->ackno);
+			send_deletenodes(r);
+			rel_read(r);
+		}
 	}
 	else if (ntohs(pkt->len) == 12) {
 		rel_sendack(r);
@@ -361,8 +364,8 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 			//frame is outside rec window size-rws and it is
 			//discarded
 			//may need to retransmitt
-		//fprintf(stderr,"outside of rec window lfr=%d, laf=%d", r->rec_sw->lfr, r->rec_sw->laf);
-		} else if (pkt_seqno > r->rec_sw->laf){ 
+			//fprintf(stderr,"outside of rec window lfr=%d, laf=%d", r->rec_sw->lfr, r->rec_sw->laf);
+		} else if (pkt_seqno > r->rec_sw->laf) {
 			//if less than window size don't retrasnmit
 			//if greater --> go ahead and retransmit
 			retransmitSpecificPacket(r, pkt_seqno);
@@ -372,7 +375,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 			rec_PackNAdd(pkt, r);
 			int dataindex = 0;
 			//fprintf(stderr,"\nreceiving::::::::: %d \n",(ntohs(pkt->len)));
-			while (dataindex<((ntohs(pkt->len)-12)/sizeof(char))) {
+			while (dataindex < ((ntohs(pkt->len) - 12) / sizeof(char))) {
 				*(r->receiverbuffer) = pkt->data[dataindex];
 				rel_output(r);
 				dataindex++;
@@ -383,8 +386,8 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 			//fprintf(stderr, "\nwindow size:: %d \n", r->rec_sw->rws);
 			//if (pkt_seqno <= r->seqNumToAck)
 			//{
-				// all frames, even if higher number of packets have been received will be received and we send an ack
-				//not sure if seqNumToAck needs to be incremented
+			// all frames, even if higher number of packets have been received will be received and we send an ack
+			//not sure if seqNumToAck needs to be incremented
 			rel_sendack(r);
 			//}
 		}
@@ -399,13 +402,13 @@ rel_read (rel_t *s)
 		signal(SIGINT, sigintHandler);
 	}
 	//fprintf(stderr,"\nrelreaddddddddddddddddddd\n");
-	if (windowfull!=NULL) {
+	if (windowfull != NULL) {
 		if (iter_PackNAdd(windowfull, s) == 0) {
 			//fprintf(stderr, "head of send_sw: %s", s->send_sw->head->packet->data);
 			return;
 		}
 		else {
-			windowfull=NULL;
+			windowfull = NULL;
 			s->seqnum++;
 		}
 	}
@@ -416,7 +419,7 @@ rel_read (rel_t *s)
 		//rel_destroy(s);
 		return;
 	}
-	else if (r==0) {
+	else if (r == 0) {
 		//fprintf(stderr, "r==0");
 		return;
 	}
@@ -491,15 +494,15 @@ rel_timer ()
 {
 	/* Retransmit any packets that need to be retransmitted */
 	//fprintf(stderr, "hello%s\n", rel_list->packet->data);
-	if(counter % 15 == 0)
+	if (counter % 15 == 0)
 	{
-		if(rel_list->send_sw->head == NULL){
+		if (rel_list->send_sw->head == NULL) {
 			//head is null at the beginning; no packets sent
 			return;
-		}		
+		}
 		//this is what we are callling one rtt check packets
-		if(ntohl(rel_list->send_sw->head->packet->seqno) != rel_list->send_sw->lar + 0){
-		//if last ack received isn't updated to what send's list holds then possibility of packet having been lost, so resend
+		if (ntohl(rel_list->send_sw->head->packet->seqno) != rel_list->send_sw->lar + 0) {
+			//if last ack received isn't updated to what send's list holds then possibility of packet having been lost, so resend
 			retransmitSpecificPacket(rel_list, ntohl(rel_list->send_sw->head->packet->seqno));
 
 		}
