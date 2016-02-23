@@ -120,7 +120,7 @@ rel_create (conn_t *c, const struct sockaddr_storage *ss,
 	//r->send_sw->head = malloc(sizeof(struct packetnode));
 	//r->send_sw->head->length = 0;
 	//r->rec_sw->head->length = 0;
-	r-<seqNumToAck = 0;
+	r->seqNumToAck = 0;
 	return r;
 }
 
@@ -217,7 +217,7 @@ int rec_PackNAdd(packet_t * pack, rel_t * s)
 	}
 	//conn_sendpkt(s->c, pack, sizeof(packet_t));
 	//s->rec_sw->lfs = ntohl(pack->seqno);
-	update_rec_sw();
+	update_rec_sw(s);
 	return 1;
 }
 
