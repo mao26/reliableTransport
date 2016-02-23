@@ -194,26 +194,30 @@ int rec_PackNAdd(packet_t * pack, rel_t * s)
 {
 	struct packetnode* current = s->rec_sw->head;
 	struct packetnode* prev = NULL;
-	int count = 0;
 	while (current != NULL)
 	{
+		if (ntohl(current->packet->seqno) > ntohl(pack->seqno)) {
+			break;
+		}
 		prev = current;
 		current = current -> next;
-		count++;
 	}
 	fprintf(stderr, "last frame received: %d", s->rec_sw->lfr);
-	if (count >= s->rec_sw->rws) {
+	if (prev!=NULL && (ntohl(prev->packet->seqno) == ntohl(pack->seqno))) {
 		return 0;
 	}
-	current = malloc(sizeof(struct packetnode));
-	current->next = NULL;
-	current->packet = pack;
-	current->length = count+1;
+	//if (count >= s->rec_sw->rws) {
+	//	return 0;
+	//}
+	struct packetnode* new = malloc(sizeof(struct packetnode));
+	new->next = current;
+	new->packet = pack;
+	new->length = 1;
 	if (prev == NULL) {
-		s->rec_sw->head = current;
+		s->rec_sw->head = new;
 	}
 	else {
-		prev->next = current;
+		prev->next = new;
 	}
 	//conn_sendpkt(s->c, pack, sizeof(packet_t));
 	//s->rec_sw->lfs = ntohl(pack->seqno);
