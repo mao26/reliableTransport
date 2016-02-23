@@ -174,6 +174,22 @@ void update_rec_sw(rel_t* r) {
 	rec_deletenodes(r);
 }
 
+void retransmitSpecificPacket(rel_t * s, int seqnum)
+{
+	struct packetnode * current = s->send_sw->head;
+	if(current == NULL){
+		fprintf(stderr, "you're asking to transmit a packet that doesn't exist");
+		return;
+	}
+	while(ntohl(current->packet->seqno) != seqnum){
+		if(current->next == NULL){
+			fprintf(stderr, "you're asking to transmit a packet that doesn't exist");
+		}
+		current = current->next;
+	}
+	conn_sendpkt(s->c, current->packet, sizeof(packet_t));
+}
+
 int iter_PackNAdd(packet_t * pack, rel_t * s)
 {
 	struct packetnode* current = s->send_sw->head;
@@ -320,12 +336,16 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 		return;
 	}
 	else if (ntohs(pkt->len) > 12) {
-		if (pkt_seqno <= r->rec_sw->lfr || pkt_seqno > r->rec_sw->laf)
+		if (pkt_seqno <= r->rec_sw->lfr)
 		{
 			//frame is outside rec window size-rws and it is
 			//discarded
 			//may need to retransmitt
-			fprintf(stderr,"outside of rec window lfr=%d, laf=%d", r->rec_sw->lfr, r->rec_sw->laf);
+		fprintf(stderr,"outside of rec window lfr=%d, laf=%d", r->rec_sw->lfr, r->rec_sw->laf);
+		} else if (pkt_seqno > r->rec_sw->laf){ 
+			//if less than window size don't retrasnmit
+			//if greater --> go ahead and retransmit
+			//retransmitSpecificPacket();
 		} else if (r->rec_sw->lfr < pkt_seqno && pkt_seqno <= r->rec_sw->laf)
 		{
 			//frame is accepted
