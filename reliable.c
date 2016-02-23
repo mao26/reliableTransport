@@ -151,15 +151,25 @@ void sigintHandler(int sig_num)
 	//fflush(stdout);
 }
 
+void rec_deletenodes(rel_t* r) {
+	while(ntohl(r->rec_sw->head->packet->seqno) < r->rec_sw->lfr) {
+		struct packetnode * temp = r->rec_sw->head;
+		r->rec_sw->head = r->rec_sw->head->next;
+		free(temp);
+		fprintf(stderr,"\ndeleted rec_sw head");
+	}
+}
+
 void update_rec_sw(rel_t* r) {
 	struct packetnode* runner = r->rec_sw->head;
-	int counter = r->rec_sw->lfr
-	while (ntohl(runner->packet->seqno)==counter) {
+	int counter = r->rec_sw->lfr;
+	fprintf(stderr,"seqno:%d, counter:%d",ntohl(runner->packet->seqno),counter);
+	while (runner->next!=NULL && ntohl(runner->packet->seqno)==(counter+1)) {
 		runner = runner->next;
 		counter++;
 	}
-	r->seqNumToAck = counter;
-	r->rec_sw->lfr = r->seqNumToAck;
+	r->seqNumToAck = counter+1;
+	r->rec_sw->lfr = (r->seqNumToAck)-1;
 	r->rec_sw->laf = r->rec_sw->lfr + r->rec_sw->rws;
 	rec_deletenodes(r);
 }
@@ -250,16 +260,18 @@ rel_demux (const struct config_common *cc,
 
 void
 rel_sendack(rel_t *r) {
-	struct ack_packet* ackpack = malloc(sizeof(struct ack_packet));
+	fprintf(stderr,"sendack");
+	packet_t* ackpack = malloc(sizeof(packet_t));
 	ackpack->cksum = 0;
 	//r->acknum++; //Not sure if this is necessary
 	ackpack->ackno = htonl(r->seqNumToAck);
 	ackpack->len = htons(8); //not sure if this is correct
 	ackpack->cksum = cksum(ackpack, ntohs(ackpack->len));
-	//conn_sendpkt(r->c, ackpack, sizeof(ack_packet));
+	conn_sendpkt(r->c, ackpack, sizeof(packet_t));
 }
 void
 rel_sendeof(rel_t *r) {
+	fprintf(stderr,"UPDATE THIS");
 	packet_t* eofpack = malloc(sizeof(packet_t));
 	eofpack->cksum = 0;
 	eofpack->ackno = htonl(r->acknum);
@@ -271,20 +283,11 @@ rel_sendeof(rel_t *r) {
 }
 
 void send_deletenodes(rel_t* r) {
-	while(r->send_sw->head->packet->seqno < r->send_sw->lar) {
-		packetnode * temp = r->send_sw->head;
+	while(ntohl(r->send_sw->head->packet->seqno) < r->send_sw->lar) {
+		struct packetnode * temp = r->send_sw->head;
 		r->send_sw->head=r->send_sw->head->next;
 		free(temp);
 		fprintf(stderr,"\ndeleted send_sw head");
-	}
-}
-
-void rec_deletenodes(rel_t* r) {
-	while(r->rec_sw->head->packet < r->rec_sw->lfr) {
-		packetnode * temp = r->rec_sw->head;
-		r->rec_sw->head = r->rec_sw->head->next;
-		free(temp)
-		fprintf(stderr,"\ndeleted rec_sw head");
 	}
 }
 
