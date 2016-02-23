@@ -151,6 +151,11 @@ void sigintHandler(int sig_num)
 	//fflush(stdout);
 }
 
+void update_rec_sw(rel_t* r) {
+	r->rec_sw->lfr = r->seqNumToAck;
+	r->rec_sw->laf = r->rec_sw->lfr + r->rec_sw->rws;
+}
+
 int iter_PackNAdd(packet_t * pack, rel_t * s)
 {
 	struct packetnode* current = s->send_sw->head;
@@ -212,7 +217,7 @@ int rec_PackNAdd(packet_t * pack, rel_t * s)
 	}
 	//conn_sendpkt(s->c, pack, sizeof(packet_t));
 	//s->rec_sw->lfs = ntohl(pack->seqno);
-	//update_rec_sw();
+	update_rec_sw();
 	return 1;
 }
 
@@ -295,14 +300,14 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 			//int dataindex = 0;
 			//fprintf(stderr,"\nreceiving::::::::: %d \n",(ntohs(pkt->len)));
 			fprintf(stderr, "\nwindow size:: %d \n", r->rec_sw->rws);
-			if (pkt_seqno <= r->seqNumToAck)
-			{
+			//if (pkt_seqno <= r->seqNumToAck)
+			//{
 				// all frames, even if higher number of packets have been received will be received and we send an ack
-				r->rec_sw->lfr = r->seqNumToAck;
-				r->rec_sw->laf = r->rec_sw->lfr + r->rec_sw->rws;
+				//r->rec_sw->lfr = r->seqNumToAck;
+				//r->rec_sw->laf = r->rec_sw->lfr + r->rec_sw->rws;
 				//not sure if seqNumToAck needs to be incremented
-				rel_sendack(r);
-			}
+			rel_sendack(r);
+			//}
 		}
 
 
