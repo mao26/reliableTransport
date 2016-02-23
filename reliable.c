@@ -116,10 +116,10 @@ rel_create (conn_t *c, const struct sockaddr_storage *ss,
 	r->send_sw->lfs = 0; //no frames sent so far
 	r->send_sw->lfs_min_lar = r->send_sw->lfs - r->send_sw->lar;
 	r->rec_sw->laf_min_lfr = r->rec_sw->laf - r->rec_sw->lfr;
-	r->rec_sw->head = malloc(sizeof(struct packetnode));
-	r->send_sw->head = malloc(sizeof(struct packetnode));
-	r->send_sw->head->length = 0;
-	r->rec_sw->head->length = 0;
+	//r->rec_sw->head = malloc(sizeof(struct packetnode));
+	//r->send_sw->head = malloc(sizeof(struct packetnode));
+	//r->send_sw->head->length = 0;
+	//r->rec_sw->head->length = 0;
 	return r;
 }
 
@@ -171,6 +171,7 @@ int iter_PackNAdd(packet_t * pack, rel_t * s)
 	current = malloc(sizeof(struct packetnode));
 	current->next = NULL;
 	current->packet = pack;
+	current->length = count+1;
 	if (prev == NULL) {
 		s->send_sw->head = current;
 	}
