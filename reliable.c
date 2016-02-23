@@ -279,6 +279,15 @@ void send_deletenodes(rel_t* r) {
 	}
 }
 
+void rec_deletenodes(rel_t* r) {
+	while(r->rec_sw->head->packet < r->rec_sw->lfr) {
+		packetnode * temp = r->rec_sw->head;
+		r->rec_sw->head = r->rec_sw->head->next;
+		free(temp)
+		fprintf(stderr,"\ndeleted rec_sw head");
+	}
+}
+
 void
 rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 {
