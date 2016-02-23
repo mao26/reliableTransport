@@ -146,7 +146,7 @@ void sigintHandler(int sig_num)
 	if (quit == 1) {
 		exit(0);
 	}
-	fprintf(stderr, "\n Cannot be terminated using Ctrl+C \n");
+	//fprintf(stderr, "\n Cannot be terminated using Ctrl+C \n");
 	quit = 1;
 	//fflush(stdout);
 }
@@ -156,7 +156,7 @@ void rec_deletenodes(rel_t* r) {
 		struct packetnode * temp = r->rec_sw->head;
 		r->rec_sw->head = r->rec_sw->head->next;
 		free(temp);
-		fprintf(stderr,"\ndeleted rec_sw head");
+		//fprintf(stderr,"\ndeleted rec_sw head");
 	}
 }
 
@@ -167,7 +167,7 @@ void update_rec_sw(rel_t* r) {
 		runner = runner->next;
 		counter++;
 	}
-	fprintf(stderr,"seqno:%d, counter:%d",ntohl(runner->packet->seqno),counter);
+	//fprintf(stderr,"seqno:%d, counter:%d",ntohl(runner->packet->seqno),counter);
 	r->seqNumToAck = counter+1;
 	r->rec_sw->lfr = (r->seqNumToAck)-1;
 	r->rec_sw->laf = r->rec_sw->lfr + r->rec_sw->rws;
@@ -178,12 +178,12 @@ void retransmitSpecificPacket(rel_t * s, int seqnum)
 {
 	struct packetnode * current = s->send_sw->head;
 	if(current == NULL){
-		fprintf(stderr, "you're asking to transmit a packet that doesn't exist");
+		//fprintf(stderr, "you're asking to transmit a packet that doesn't exist");
 		return;
 	}
 	while(ntohl(current->packet->seqno) != seqnum){
 		if(current->next == NULL){
-			fprintf(stderr, "you're asking to transmit a packet that doesn't exist");
+			//fprintf(stderr, "you're asking to transmit a packet that doesn't exist");
 		}
 		current = current->next;
 	}
@@ -205,7 +205,7 @@ int iter_PackNAdd(packet_t * pack, rel_t * s)
 		current = current -> next;
 		count++;
 	}
-	fprintf(stderr, "last frame sent: %d", s->send_sw->lfs);
+	//fprintf(stderr, "last frame sent: %d", s->send_sw->lfs);
 	if (count >= s->send_sw->sws) {
 		return 0;
 	}
@@ -276,18 +276,18 @@ rel_demux (const struct config_common *cc,
 
 void
 rel_sendack(rel_t *r) {
-	fprintf(stderr,"sendack");
+	//fprintf(stderr,"sendack");
 	packet_t* ackpack = malloc(sizeof(packet_t));
 	ackpack->cksum = 0;
 	//r->acknum++; //Not sure if this is necessary
-	ackpack->ackno = htonl(r->seqNumToAck);
+	ackpack->ackno = htonl((r->seqNumToAck));
 	ackpack->len = htons(8); //not sure if this is correct
 	ackpack->cksum = cksum(ackpack, ntohs(ackpack->len));
 	conn_sendpkt(r->c, ackpack, sizeof(packet_t));
 }
 void
 rel_sendeof(rel_t *r) {
-	fprintf(stderr,"UPDATE THIS");
+	//fprintf(stderr,"UPDATE THIS");
 	packet_t* eofpack = malloc(sizeof(packet_t));
 	eofpack->cksum = 0;
 	eofpack->ackno = htonl(r->acknum);
@@ -303,7 +303,7 @@ void send_deletenodes(rel_t* r) {
 		struct packetnode * temp = r->send_sw->head;
 		r->send_sw->head=r->send_sw->head->next;
 		free(temp);
-		fprintf(stderr,"\ndeleted send_sw head");
+		//fprintf(stderr,"\ndeleted send_sw head");
 	}
 }
 
@@ -321,7 +321,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	//fprintf(stderr, "cksum=%d, checksum=%d", cksum(pkt, pkt_len), checksum);
 	if (n != 512 || (cksum(pkt, pkt_len) != checksum)) {
 		//drop pack
-		fprintf(stderr, "dropped");
+		//fprintf(stderr, "dropped");
 		return;
 	}
 	else if (ntohs(pkt->len) == 8) {
@@ -341,7 +341,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 			//frame is outside rec window size-rws and it is
 			//discarded
 			//may need to retransmitt
-		fprintf(stderr,"outside of rec window lfr=%d, laf=%d", r->rec_sw->lfr, r->rec_sw->laf);
+		//fprintf(stderr,"outside of rec window lfr=%d, laf=%d", r->rec_sw->lfr, r->rec_sw->laf);
 		} else if (pkt_seqno > r->rec_sw->laf){ 
 			//if less than window size don't retrasnmit
 			//if greater --> go ahead and retransmit
@@ -350,10 +350,17 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 		{
 			//frame is accepted
 			rec_PackNAdd(pkt, r);
-			rel_output(r);
+			int dataindex = 0;
+			//fprintf(stderr,"\nreceiving::::::::: %d \n",(ntohs(pkt->len)));
+			while (dataindex<((ntohs(pkt->len)-12)/sizeof(char))) {
+				*(r->receiverbuffer) = pkt->data[dataindex];
+				rel_output(r);
+				dataindex++;
+			}
+
 			//int dataindex = 0;
 			//fprintf(stderr,"\nreceiving::::::::: %d \n",(ntohs(pkt->len)));
-			fprintf(stderr, "\nwindow size:: %d \n", r->rec_sw->rws);
+			//fprintf(stderr, "\nwindow size:: %d \n", r->rec_sw->rws);
 			//if (pkt_seqno <= r->seqNumToAck)
 			//{
 				// all frames, even if higher number of packets have been received will be received and we send an ack
@@ -374,7 +381,7 @@ rel_read (rel_t *s)
 
 	int r = conn_input(s->c, (void *)(s->senderbuffer), sizeof(char));
 	if (r == -1) {
-		fprintf(stderr, "eofffffffffffffffffffffff");
+		//fprintf(stderr, "eofffffffffffffffffffffff");
 		rel_sendeof(s);
 		//rel_destroy(s);
 		return;
@@ -397,7 +404,7 @@ rel_read (rel_t *s)
 			s->acked = 0;
 			//fprintf(stderr, "\nsendpkt: %s\n", pack->data);
 			if (iter_PackNAdd(pack, s) == 0) {
-				fprintf(stderr, "head of send_sw: %s", s->send_sw->head->packet->data);
+				//fprintf(stderr, "head of send_sw: %s", s->send_sw->head->packet->data);
 				return;
 			}
 			////conn_sendpkt(s->c, pack, sizeof(packet_t));
@@ -413,7 +420,7 @@ rel_read (rel_t *s)
 		}
 	}
 	if (r == -1) {
-		fprintf(stderr, "eofffffffffffffffffffffffffffffffff");
+		//fprintf(stderr, "eofffffffffffffffffffffffffffffffff");
 		rel_sendeof(s);
 		//rel_destroy(s);
 		return;
@@ -425,7 +432,7 @@ rel_read (rel_t *s)
 	s->acked = 0;
 	//conn_sendpkt(s->c, pack, sizeof(packet_t));
 	int notfull = iter_PackNAdd(pack, s);
-	fprintf(stderr, "head of send_sw: %s", s->send_sw->head->packet->data);
+	//fprintf(stderr, "head of send_sw: %s", s->send_sw->head->packet->data);
 	if (notfull == 0) {
 		return;
 	}
@@ -440,6 +447,7 @@ void
 rel_output (rel_t *r)
 {
 	//fprintf(stderr, "reloutputtt\n");
+	conn_output(r->c, (void *)(r->receiverbuffer), sizeof(char));
 
 }
 
