@@ -438,6 +438,7 @@ rel_read (rel_t *s)
 	//conn_sendpkt(s->c, pack, sizeof(packet_t));
 	int notfull = iter_PackNAdd(pack, s);
 	//fprintf(stderr, "head of send_sw: %s", s->send_sw->head->packet->data);
+	fprintf(stderr,"notfull %d",notfull);
 	if (notfull == 0) {
 		return;
 	}
@@ -468,7 +469,7 @@ rel_timer ()
 			return;
 		}		
 		//this is what we are callling one rtt check packets
-		if(ntohl(rel_list->send_sw->head->packet->seqno) != rel_list->send_sw->lar + 0){
+		if(ntohl(rel_list->send_sw->head->packet->seqno) != rel_list->send_sw->lar + 1){
 		//if last ack received isn't updated to what send's list holds then possibility of packet having been lost, so resend
 			retransmitSpecificPacket(rel_list, ntohl(rel_list->send_sw->head->packet->seqno));
 
