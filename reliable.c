@@ -27,7 +27,7 @@ struct packetnode {
 };
 
 struct rec_slidingWindow {
-	int rws; // upper boaund on no. of out-of-order frames that the receiver is willing to accept
+	int rws; // upper bound on no. of out-of-order frames that the receiver is willing to accept
 	int laf; // seqNum of largest acceptable frame
 	int lfr; // seqNum of last frame received
 	int laf_min_lfr; // laf - lfr <= rws
@@ -281,13 +281,15 @@ rel_demux (const struct config_common *cc,
 void
 rel_sendack(rel_t *r) {
 	//fprintf(stderr,"sendack");
-	packet_t* ackpack = malloc(sizeof(packet_t));
+	packet_t *ackpack = malloc(sizeof(ackpack));
+	memset(ackpack, 0, sizeof(*ackpack));
 	ackpack->cksum = 0;
 	//r->acknum++; //Not sure if this is necessary
-	ackpack->ackno = htonl((r->seqNumToAck));
-	ackpack->len = htons(8); //not sure if this is correct
-	ackpack->cksum = cksum(ackpack, ntohs(ackpack->len));
-	conn_sendpkt(r->c, ackpack, sizeof(packet_t));
+	ackpack->ackno = htonl((r->rec_sw->lfr + 1));
+	ackpack->len = htons(sizeof(struct ack_packet)); //not sure if this is correct
+	ackpack->cksum = cksum(ackpack, sizeof(struct ack_packet));
+	conn_sendpkt(r->c, ackpack, sizeof(struct ack_packet));
+
 }
 void
 rel_sendeof(rel_t *r) {
@@ -319,17 +321,28 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	//fprintf(stderr, "\nrecvpkt len: %d\n", ntohs(pkt->len));
 	//fprintf(stderr, "my window size is %d", r->rec_sw->rws);
 	// Still need check for corrupted packet with checksum
-	int checksum = pkt->cksum;
-	int pkt_len = ntohs(pkt->len);
+	//int checksum = pkt->cksum;
+	//int pkt_len = ntohs(pkt->len);
 	int pkt_seqno = ntohl(pkt->seqno);
-	pkt->cksum = 0;
+	//pkt->cksum = 0;
+
+	packet_t* newpack = malloc(ntohs(pkt->len));
+	memcpy(newpack, pkt, ntohs(pkt->len));
+	newpack->cksum = 0;
+	newpack->cksum = cksum(newpack, ntohs(newpack->len));
+
+	// check for corrupted packet
+	if (newpack->cksum != pkt->cksum) {
+		//fprintf(stderr, "Corrupted Data");
+		return;
+	}
 	// Check for corrupted data
 	//fprintf(stderr, "cksum=%d, checksum=%d", cksum(pkt, pkt_len), n);
-	if (/*n != 512 ||*/ (cksum(pkt, pkt_len) != checksum)) {
+	/*if (n != 512 || (cksum(pkt, pkt_len) != checksum)) {
 		//drop pack
 		//fprintf(stderr, "dropped");
 		return;
-	}
+	}*/
 	else if (ntohs(pkt->len) == 8) {
 		//fprintf(stderr,"ackkkkkkkkkkkkkk");
 		r->send_sw->lar=ntohl(pkt->ackno)-1;
