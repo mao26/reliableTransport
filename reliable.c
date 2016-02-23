@@ -120,7 +120,7 @@ rel_create (conn_t *c, const struct sockaddr_storage *ss,
 	//r->send_sw->head = malloc(sizeof(struct packetnode));
 	//r->send_sw->head->length = 0;
 	//r->rec_sw->head->length = 0;
-	r-<seqNumToAck = 0;
+	r->seqNumToAck = 0;
 	return r;
 }
 
@@ -217,7 +217,7 @@ int rec_PackNAdd(packet_t * pack, rel_t * s)
 	}
 	//conn_sendpkt(s->c, pack, sizeof(packet_t));
 	//s->rec_sw->lfs = ntohl(pack->seqno);
-	update_rec_sw();
+	update_rec_sw(s);
 	return 1;
 }
 
@@ -258,6 +258,13 @@ rel_sendeof(rel_t *r) {
 	r->seqnum++;
 }
 
+void send_deletenodes(rel_t* r) {
+	while(r->send_sw->head->packet->seqno < r->send_sw->lar) {
+		r->send_sw->head=r->send_sw->head->next;
+		fprintf(stderr,"\ndeleted send_sw head");
+	}
+}
+
 void
 rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 {
@@ -277,7 +284,8 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	}
 	else if (ntohs(pkt->len) == 8) {
 		//fprintf(stderr,"ackkkkkkkkkkkkkk");
-
+		r->send_sw->lar=ntohl(pkt->ackno);
+		send_deletenodes(r);
 	}
 	else if (ntohs(pkt->len) == 12) {
 		rel_sendack(r);
@@ -303,8 +311,8 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 			//if (pkt_seqno <= r->seqNumToAck)
 			//{
 				// all frames, even if higher number of packets have been received will be received and we send an ack
-				//r->rec_sw->lfr = r->seqNumToAck;
-				//r->rec_sw->laf = r->rec_sw->lfr + r->rec_sw->rws;
+				r->rec_sw->lfr = r->seqNumToAck;
+				r->rec_sw->laf = r->rec_sw->lfr + r->rec_sw->rws;
 				//not sure if seqNumToAck needs to be incremented
 			rel_sendack(r);
 			//}
