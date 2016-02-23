@@ -18,6 +18,7 @@
 static int quit = 0;
 void iterPackNAdd(packet_t * pack, rel_t * s);
 static int counter = 0;
+static packet_t* windowfull = NULL;
 
 struct packetnode {
 	int length;
@@ -153,11 +154,12 @@ void sigintHandler(int sig_num)
 }
 
 void rec_deletenodes(rel_t* r) {
+	//fprintf(stderr,"\ninitial seqno:%d, lfr:%d",ntohl(r->rec_sw->head->packet->seqno),r->rec_sw->lfr);
 	while(ntohl(r->rec_sw->head->packet->seqno) <= r->rec_sw->lfr) {
 		struct packetnode * temp = r->rec_sw->head;
 		r->rec_sw->head = r->rec_sw->head->next;
 		free(temp);
-		//fprintf(stderr,"\ndeleted rec_sw head");
+		//fprintf(stderr,"\ndeleted rec_sw head seqno:%d, lfr:%d",ntohl(r->rec_sw->head->packet->seqno),r->rec_sw->lfr);
 	}
 }
 
@@ -208,6 +210,7 @@ int iter_PackNAdd(packet_t * pack, rel_t * s)
 	}
 	//fprintf(stderr, "last frame sent: %d", s->send_sw->lfs);
 	if (count >= s->send_sw->sws) {
+		windowfull=pack;
 		return 0;
 	}
 	current = malloc(sizeof(struct packetnode));
@@ -300,6 +303,8 @@ rel_sendeof(rel_t *r) {
 }
 
 void send_deletenodes(rel_t* r) {
+	//fprintf(stderr,"deletenodes called");
+	//fprintf(stderr,"\ninitial seqno:%d, lar:%d",ntohl(r->send_sw->head->packet->seqno),r->send_sw->lar);
 	while(ntohl(r->send_sw->head->packet->seqno) < r->send_sw->lar) {
 		struct packetnode * temp = r->send_sw->head;
 		r->send_sw->head=r->send_sw->head->next;
@@ -311,7 +316,7 @@ void send_deletenodes(rel_t* r) {
 void
 rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 {
-	//fprintf(stderr, "\nrecvpkt: %s\n", pkt->data);
+	//fprintf(stderr, "\nrecvpkt len: %d\n", ntohs(pkt->len));
 	//fprintf(stderr, "my window size is %d", r->rec_sw->rws);
 	// Still need check for corrupted packet with checksum
 	int checksum = pkt->cksum;
@@ -319,15 +324,15 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	int pkt_seqno = ntohl(pkt->seqno);
 	pkt->cksum = 0;
 	// Check for corrupted data
-	//fprintf(stderr, "cksum=%d, checksum=%d", cksum(pkt, pkt_len), checksum);
-	if (n != 512 || (cksum(pkt, pkt_len) != checksum)) {
+	//fprintf(stderr, "cksum=%d, checksum=%d", cksum(pkt, pkt_len), n);
+	if (/*n != 512 ||*/ (cksum(pkt, pkt_len) != checksum)) {
 		//drop pack
 		//fprintf(stderr, "dropped");
 		return;
 	}
 	else if (ntohs(pkt->len) == 8) {
 		//fprintf(stderr,"ackkkkkkkkkkkkkk");
-		r->send_sw->lar=ntohl(pkt->ackno);
+		r->send_sw->lar=ntohl(pkt->ackno)-1;
 		send_deletenodes(r);
 		rel_read(r);
 	}
@@ -380,15 +385,26 @@ rel_read (rel_t *s)
 	if (quit == 0) {
 		signal(SIGINT, sigintHandler);
 	}
-	fprintf(stderr,"\nrelreaddddddddddddddddddd\n");
+	//fprintf(stderr,"\nrelreaddddddddddddddddddd\n");
+	if (windowfull!=NULL) {
+		if (iter_PackNAdd(windowfull, s) == 0) {
+			//fprintf(stderr, "head of send_sw: %s", s->send_sw->head->packet->data);
+			return;
+		}
+		else {
+			windowfull=NULL;
+			s->seqnum++;
+		}
+	}
 	int r = conn_input(s->c, (void *)(s->senderbuffer), sizeof(char));
 	if (r == -1) {
-		//fprintf(stderr, "eofffffffffffffffffffffff");
+		fprintf(stderr, "eofffffffffffffffffffffff");
 		rel_sendeof(s);
 		//rel_destroy(s);
 		return;
 	}
 	else if (r==0) {
+		//fprintf(stderr, "r==0");
 		return;
 	}
 	int dataindex = 0;
@@ -425,7 +441,7 @@ rel_read (rel_t *s)
 		}
 	}
 	if (r == -1) {
-		//fprintf(stderr, "eofffffffffffffffffffffffffffffffff");
+		fprintf(stderr, "eofffffffffffffffffffffffffffffffff2");
 		rel_sendeof(s);
 		//rel_destroy(s);
 		return;
@@ -438,7 +454,7 @@ rel_read (rel_t *s)
 	//conn_sendpkt(s->c, pack, sizeof(packet_t));
 	int notfull = iter_PackNAdd(pack, s);
 	//fprintf(stderr, "head of send_sw: %s", s->send_sw->head->packet->data);
-	fprintf(stderr,"notfull %d",notfull);
+	//fprintf(stderr,"notfull %d",notfull);
 	if (notfull == 0) {
 		return;
 	}
