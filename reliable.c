@@ -272,7 +272,9 @@ rel_sendeof(rel_t *r) {
 
 void send_deletenodes(rel_t* r) {
 	while(r->send_sw->head->packet->seqno < r->send_sw->lar) {
+		packetnode * temp = r->send_sw->head;
 		r->send_sw->head=r->send_sw->head->next;
+		free(temp);
 		fprintf(stderr,"\ndeleted send_sw head");
 	}
 }
