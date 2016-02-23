@@ -54,6 +54,8 @@ struct reliable_state {
 	conn_t *c;			/* This is the connection object */
 	packet_t * packet;
 	/* Add your own data fields below this */
+	int window;
+	int timeout;
 	int seqnum;
 	char* senderbuffer;
 	char* receiverbuffer;
@@ -108,15 +110,17 @@ rel_create (conn_t *c, const struct sockaddr_storage *ss,
 	r->receiverbuffer = malloc(sizeof(char));
 	r->acknum = 1;
 	r->acked = 0;
+	r->window = cc->window;
+	r->timeout = cc->timeout;
 
 	/*init our sliding windows*/
 	r->rec_sw = xmalloc(sizeof(struct send_slidingWindow));
 	r->send_sw = xmalloc(sizeof(struct rec_slidingWindow));
-	r->rec_sw->rws = 4;//cc->window; //window size
+	r->rec_sw->rws = r->window;//cc->window; //window size
 	r->rec_sw->lfr = 0; //no frames recieved
 	r->rec_sw->laf = r->rec_sw->lfr + r->rec_sw->rws; //last acceptable frame
 	//will be our window size plus last seqnum accepted
-	r->send_sw->sws = 4;//cc->window; //window size
+	r->send_sw->sws = r->window;//cc->window; //window size
 	r->send_sw->lar = 0; //no acks received
 	r->send_sw->lfs = 0; //no frames sent so far
 	r->send_sw->lfs_min_lar = r->send_sw->lfs - r->send_sw->lar;
@@ -329,23 +333,29 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	//fprintf(stderr, "\nrecvpkt len: %d\n", ntohs(pkt->len));
 	//fprintf(stderr, "my window size is %d", r->rec_sw->rws);
 	// Still need check for corrupted packet with checksum
-	int checksum = pkt->cksum;
-	int pkt_len = ntohs(pkt->len);
+	packet_t* temppack = malloc(ntohs(pkt->len));
+	memcpy(temppack, pkt, ntohs(pkt->len));
+	temppack->cksum = 0;
+	temppack->cksum = cksum(temppack, ntohs(temppack->len));
+
+	// pkt_len = ntohs(pkt->len)
 	int pkt_seqno = ntohl(pkt->seqno);
-	pkt->cksum = 0;
+
 	// Check for corrupted data
 	//fprintf(stderr, "cksum=%d, checksum=%d", cksum(pkt, pkt_len), n);
-	if (/*n != 512 ||*/ (cksum(pkt, pkt_len) != checksum)) {
+	if (temppack->cksum != pkt->cksum) {
 		//drop pack
-		//fprintf(stderr, "dropped");
+		fprintf(stderr, "dropped");
 		return;
 	}
 
-	else if (ntohs(pkt->len) == 8) {
+
+	// Recieving an ACK packet
+	else if (ntohs(pkt->len) == sizeof(struct ack_packet)) {
 		//fprintf(stderr,"ackkkkkkkkkkkkkk");
 		r->send_sw->lar=ntohl(pkt->ackno)-1;
 		//fprintf(stderr,"eofseqno:%d, comp:%d",eofseqno,(ntohl(pkt->ackno)-1));
-		if (eofseqno==(ntohl(pkt->ackno)-1)) {
+		if (eofseqno == (ntohl(pkt->ackno)-1)) {
 			//fprintf(stderr,"destryyyyyyyy");
 			eofacked=1;
 			//rel_destroy(r);
@@ -356,47 +366,56 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 			rel_read(r);
 		}
 	}
-	else if (ntohs(pkt->len) == 12) {
-		rel_sendack(r,1);
-		//conn_output(r->c, (void *)(r->receiverbuffer), 0);
-		//rel_destroy(r);
-		return;
-	}
-	else if (ntohs(pkt->len) > 12) {
-		if (pkt_seqno <= r->rec_sw->lfr)
-		{
-			//frame is outside rec window size-rws and it is
-			//discarded
-			//may need to retransmitt
-		//fprintf(stderr,"outside of rec window lfr=%d, laf=%d", r->rec_sw->lfr, r->rec_sw->laf);
-		} else if (pkt_seqno > r->rec_sw->laf){ 
-			//if less than window size don't retrasnmit
-			//if greater --> go ahead and retransmit
-			retransmitSpecificPacket(r, pkt_seqno);
-		} else if (r->rec_sw->lfr < pkt_seqno && pkt_seqno <= r->rec_sw->laf)
-		{
-			//frame is accepted
-			rec_PackNAdd(pkt, r);
-			int dataindex = 0;
-			//fprintf(stderr,"\nreceiving::::::::: %d \n",(ntohs(pkt->len)));
-			while (dataindex<((ntohs(pkt->len)-12)/sizeof(char))) {
-				*(r->receiverbuffer) = pkt->data[dataindex];
-				rel_output(r);
-				dataindex++;
-			}
+	else{
 
-			//int dataindex = 0;
-			//fprintf(stderr,"\nreceiving::::::::: %d \n",(ntohs(pkt->len)));
-			//fprintf(stderr, "\nwindow size:: %d \n", r->rec_sw->rws);
-			//if (pkt_seqno <= r->seqNumToAck)
-			//{
+		if (ntohs(pkt->len) == 12) {
+			rel_sendack(r,1);
+			//conn_output(r->c, (void *)(r->receiverbuffer), 0);
+			//rel_destroy(r);
+			return;
+		}
+		else if (ntohs(pkt->len) > 12) {
+			if (pkt_seqno <= r->rec_sw->lfr)
+			{
+				//frame is outside rec window size-rws and it is
+				//discarded
+				//may need to retransmitt
+				//fprintf(stderr,"outside of rec window lfr=%d, laf=%d", r->rec_sw->lfr, r->rec_sw->laf);
+			} else if (pkt_seqno > r->rec_sw->laf){
+				//if less than window size don't retrasnmit
+				//if greater --> go ahead and retransmit
+
+				//I commented the next line out, I think if the pkt->seqno > largest acceptable frame then the frame
+				//should be discarded right? - Sajal
+				//retransmitSpecificPacket(r, pkt_seqno);
+				fprintf(stderr, "This frame is out of range and is discarded");
+			} else if (r->rec_sw->lfr < pkt_seqno && pkt_seqno <= r->rec_sw->laf)
+			{
+				//frame is accepted
+				rec_PackNAdd(pkt, r);
+				int dataindex = 0;
+				//fprintf(stderr,"\nreceiving::::::::: %d \n",(ntohs(pkt->len)));
+				while (dataindex<((ntohs(pkt->len)-12)/sizeof(char))) {
+					*(r->receiverbuffer) = pkt->data[dataindex];
+					rel_output(r);
+					dataindex++;
+				}
+
+				//int dataindex = 0;
+				//fprintf(stderr,"\nreceiving::::::::: %d \n",(ntohs(pkt->len)));
+				//fprintf(stderr, "\nwindow size:: %d \n", r->rec_sw->rws);
+				//if (pkt_seqno <= r->seqNumToAck)
+				//{
 				// all frames, even if higher number of packets have been received will be received and we send an ack
 				//not sure if seqNumToAck needs to be incremented
-			rel_sendack(r,0);
-			//}
+				rel_sendack(r,0);
+				//}
+			}
+
 		}
 
 	}
+
 }
 
 void
@@ -490,6 +509,28 @@ rel_read (rel_t *s)
 void
 rel_output (rel_t *r)
 {
+	//Get first value from buffer, if exists
+
+	// What are we putting in the reciever buffer? Should we packets instead of chars?
+	/*while(r->receiverbuffer[0] != NULL){
+
+		//int packet_len = ntohs(r->receiverbuffer[0]->len) - 12; //
+		int avail_Buffer_Space = conn_bufspace(r->c);
+
+		if (packet_len > avail_Buffer_Space){
+
+			fprintf(stderr, "The Reciever Buffer is full");
+			return;
+
+		}*/
+
+		//conn_output(r->c, r->receiverbuffer[0], packet_len);
+
+		//r->rec_sw->lfr = SEQNUM of packet for receiverbuffer[0];
+
+		//Make sure that everything within this buffer is in the right spot now
+	
+
 	//fprintf(stderr, "reloutputtt\n");
 	//if (*(r->receiverbuffer)!=0) {
 	//fprintf(stderr, "%c",*(r->receiverbuffer));
