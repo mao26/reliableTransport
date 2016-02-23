@@ -153,7 +153,7 @@ void sigintHandler(int sig_num)
 }
 
 void rec_deletenodes(rel_t* r) {
-	while(ntohl(r->rec_sw->head->packet->seqno) < r->rec_sw->lfr) {
+	while(ntohl(r->rec_sw->head->packet->seqno) <= r->rec_sw->lfr) {
 		struct packetnode * temp = r->rec_sw->head;
 		r->rec_sw->head = r->rec_sw->head->next;
 		free(temp);
@@ -164,11 +164,11 @@ void rec_deletenodes(rel_t* r) {
 void update_rec_sw(rel_t* r) {
 	struct packetnode* runner = r->rec_sw->head;
 	int counter = r->rec_sw->lfr;
-	fprintf(stderr,"seqno:%d, counter:%d",ntohl(runner->packet->seqno),counter);
 	while (runner->next!=NULL && ntohl(runner->packet->seqno)==(counter+1)) {
 		runner = runner->next;
 		counter++;
 	}
+	fprintf(stderr,"seqno:%d, counter:%d",ntohl(runner->packet->seqno),counter);
 	r->seqNumToAck = counter+1;
 	r->rec_sw->lfr = (r->seqNumToAck)-1;
 	r->rec_sw->laf = r->rec_sw->lfr + r->rec_sw->rws;
