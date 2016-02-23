@@ -122,7 +122,7 @@ rel_create (conn_t *c, const struct sockaddr_storage *ss,
 	//r->send_sw->head = malloc(sizeof(struct packetnode));
 	//r->send_sw->head->length = 0;
 	//r->rec_sw->head->length = 0;
-	r->seqNumToAck = 0;
+	r->seqNumToAck = 1;
 	return r;
 }
 
@@ -171,8 +171,8 @@ void update_rec_sw(rel_t* r) {
 		counter++;
 	}
 	//fprintf(stderr,"seqno:%d, counter:%d",ntohl(runner->packet->seqno),counter);
-	r->seqNumToAck = counter+1;
-	r->rec_sw->lfr = (r->seqNumToAck)-1;
+	r->seqNumToAck = counter+2;
+	r->rec_sw->lfr = (r->seqNumToAck)-2;
 	r->rec_sw->laf = r->rec_sw->lfr + r->rec_sw->rws;
 	rec_deletenodes(r);
 }
@@ -485,7 +485,7 @@ rel_timer ()
 			return;
 		}		
 		//this is what we are callling one rtt check packets
-		if(ntohl(rel_list->send_sw->head->packet->seqno) != rel_list->send_sw->lar + 1){
+		if(ntohl(rel_list->send_sw->head->packet->seqno) != rel_list->send_sw->lar + 0){
 		//if last ack received isn't updated to what send's list holds then possibility of packet having been lost, so resend
 			retransmitSpecificPacket(rel_list, ntohl(rel_list->send_sw->head->packet->seqno));
 
