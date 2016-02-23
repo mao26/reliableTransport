@@ -17,6 +17,7 @@
 
 static int quit = 0;
 void iterPackNAdd(packet_t * pack, rel_t * s);
+static int counter = 0;
 
 struct packetnode {
 	int length;
@@ -345,7 +346,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 		} else if (pkt_seqno > r->rec_sw->laf){ 
 			//if less than window size don't retrasnmit
 			//if greater --> go ahead and retransmit
-			//retransmitSpecificPacket();
+			retransmitSpecificPacket(r, pkt_seqno);
 		} else if (r->rec_sw->lfr < pkt_seqno && pkt_seqno <= r->rec_sw->laf)
 		{
 			//frame is accepted
@@ -456,5 +457,18 @@ rel_timer ()
 {
 	/* Retransmit any packets that need to be retransmitted */
 	//fprintf(stderr, "hello%s\n", rel_list->packet->data);
+	if(counter % 15 == 0)
+	{
+		if(rel_list->send_sw->head == NULL){
+			//head is null at the beginning; no packets sent
+			return;
+		}		
+		//this is what we are callling one rtt check packets
+		if(ntohl(rel_list->send_sw->head->packet->seqno) != rel_list->send_sw->lar + 1){
+		//if last ack received isn't updated to what send's list holds then possibility of packet having been lost, so resend
+			retransmitSpecificPacket(rel_list, ntohl(rel_list->send_sw->head->packet->seqno));
 
+		}
+	}
+	counter++;
 }
