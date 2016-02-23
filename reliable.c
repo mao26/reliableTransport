@@ -152,8 +152,16 @@ void sigintHandler(int sig_num)
 }
 
 void update_rec_sw(rel_t* r) {
+	struct packetnode* runner = r->rec_sw->head;
+	int counter = r->rec_sw->lfr
+	while (ntohl(runner->packet->seqno)==counter) {
+		runner = runner->next;
+		counter++;
+	}
+	r->seqNumToAck = counter;
 	r->rec_sw->lfr = r->seqNumToAck;
 	r->rec_sw->laf = r->rec_sw->lfr + r->rec_sw->rws;
+	rec_deletenodes(r);
 }
 
 int iter_PackNAdd(packet_t * pack, rel_t * s)
@@ -315,8 +323,6 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 			//if (pkt_seqno <= r->seqNumToAck)
 			//{
 				// all frames, even if higher number of packets have been received will be received and we send an ack
-				r->rec_sw->lfr = r->seqNumToAck;
-				r->rec_sw->laf = r->rec_sw->lfr + r->rec_sw->rws;
 				//not sure if seqNumToAck needs to be incremented
 			rel_sendack(r);
 			//}
