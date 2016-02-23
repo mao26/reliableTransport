@@ -328,6 +328,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	if (/*n != 512 ||*/ (cksum(pkt, pkt_len) != checksum)) {
 		//drop pack
 		//fprintf(stderr, "dropped");
+		retransmitSpecificPacket(r, ntohs(pkt->seqno));
 		return;
 	}
 	else if (ntohs(pkt->len) == 8) {
