@@ -219,8 +219,8 @@ int rec_PackNAdd(packet_t * pack, rel_t * s)
 		}
 		prev = current;
 		current = current -> next;
+
 	}
-	fprintf(stderr, "last frame received: %d", s->rec_sw->lfr);
 	if (prev!=NULL && (ntohl(prev->packet->seqno) == ntohl(pack->seqno))) {
 		return 0;
 	}
@@ -229,7 +229,9 @@ int rec_PackNAdd(packet_t * pack, rel_t * s)
 	//}
 	struct packetnode* new = malloc(sizeof(struct packetnode));
 	new->next = current;
-	new->packet = pack;
+	packet_t *newpack = malloc(sizeof(packet_t));
+	memcpy(newpack, pack, sizeof(packet_t));
+	new->packet = newpack;
 	new->length = 1;
 	if (prev == NULL) {
 		s->rec_sw->head = new;
@@ -237,8 +239,6 @@ int rec_PackNAdd(packet_t * pack, rel_t * s)
 	else {
 		prev->next = new;
 	}
-	//conn_sendpkt(s->c, pack, sizeof(packet_t));
-	//s->rec_sw->lfs = ntohl(pack->seqno);
 	update_rec_sw(s);
 	return 1;
 }
@@ -341,8 +341,6 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 			rel_sendack(r);
 			//}
 		}
-
-
 
 	}
 }
