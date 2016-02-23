@@ -329,6 +329,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 		//fprintf(stderr,"ackkkkkkkkkkkkkk");
 		r->send_sw->lar=ntohl(pkt->ackno);
 		send_deletenodes(r);
+		rel_read(r);
 	}
 	else if (ntohs(pkt->len) == 12) {
 		rel_sendack(r);
@@ -379,12 +380,15 @@ rel_read (rel_t *s)
 	if (quit == 0) {
 		signal(SIGINT, sigintHandler);
 	}
-
+	fprintf(stderr,"\nrelreaddddddddddddddddddd\n");
 	int r = conn_input(s->c, (void *)(s->senderbuffer), sizeof(char));
 	if (r == -1) {
 		//fprintf(stderr, "eofffffffffffffffffffffff");
 		rel_sendeof(s);
 		//rel_destroy(s);
+		return;
+	}
+	else if (r==0) {
 		return;
 	}
 	int dataindex = 0;
@@ -464,7 +468,7 @@ rel_timer ()
 			return;
 		}		
 		//this is what we are callling one rtt check packets
-		if(ntohl(rel_list->send_sw->head->packet->seqno) != rel_list->send_sw->lar + 1){
+		if(ntohl(rel_list->send_sw->head->packet->seqno) != rel_list->send_sw->lar + 0){
 		//if last ack received isn't updated to what send's list holds then possibility of packet having been lost, so resend
 			retransmitSpecificPacket(rel_list, ntohl(rel_list->send_sw->head->packet->seqno));
 
