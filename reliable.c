@@ -144,6 +144,8 @@ rel_create (conn_t *c, const struct sockaddr_storage *ss,
 void
 rel_destroy (rel_t *r)
 {
+	if (r->eof_rec && r->eof_read
+			&& r->send_sw->lar > r->send_sw->lfs && r->receiverbuffer[0]==NULL) {
 	if (r->next)
 		r->next->prev = r->prev;
 	*r->prev = r->next;
@@ -153,6 +155,7 @@ rel_destroy (rel_t *r)
 	free(r->receiverbuffer);
 	free(r->times);
 	free(r);
+	}
 }
 
 /* Signal Handler for SIGINT */
@@ -306,14 +309,6 @@ rel_sendack(rel_t *r) {
 	conn_sendpkt(r->c, ackpack, sizeof(struct ack_packet));
 	free(ackpack);
 
-}
-
-void verify_free(rel_t* r) {
-
-	if (r->eof_rec && r->eof_read
-			&& r->send_sw->lar > r->send_sw->lfs && r->receiverbuffer[0]==NULL) {
-		rel_destroy(r);
-	}
 }
 
 void send_packet(packet_t* pkt, rel_t* s, int index, int len) {
@@ -518,7 +513,7 @@ rel_timer ()
 		}
 
 	}
-	verify_free(rel_list);
+	rel_destroy(rel_list);
 
 }
 
