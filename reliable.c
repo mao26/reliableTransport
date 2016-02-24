@@ -27,17 +27,17 @@ struct packetnode {
 };
 
 struct rec_slidingWindow {
-	int rws; // upper bound on no. of out-of-order frames that the receiver is willing to accept
-	int laf; // seqNum of largest acceptable frame
-	int lfr; // seqNum of last frame received
+	uint32_t rws; // upper bound on no. of out-of-order frames that the receiver is willing to accept
+	uint32_t laf; // seqNum of largest acceptable frame
+	uint32_t lfr; // seqNum of last frame received
 	//int laf_min_lfr; // laf - lfr <= rws
 	//struct packetnode* head;
 };
 
 struct send_slidingWindow {
-	int sws; //upper bound on no. of unacked frames that sender can transmitt
-	int lar; // sequence of last ack received
-	int lfs; //last frame sent
+	uint32_t sws; //upper bound on no. of unacked frames that sender can transmitt
+	uint32_t lar; // sequence of last ack received
+	int32_t lfs; //last frame sent
 	//int lfs_min_lar; // lfs - lar <= sws
 	//struct packetnode* head;
 };
@@ -49,7 +49,7 @@ struct reliable_state {
 	rel_t **prev;
 
 	conn_t *c;			/* This is the connection object */
-	packet_t * packet;
+	//packet_t * packet;
 	/* Add your own data fields below this */
 	int eof_seqnum;
 	int eof_rec;
@@ -360,7 +360,12 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	//int pkt_len = ntohs(pkt->len);
 	//int pkt_seqno = ntohl(pkt->seqno);
 	//pkt->cksum = 0;
-
+	int ackSize = sizeof(struct ack_packet);
+	int dataPackSize = sizeof(pkt->data) + 12;
+	if (htons(pkt->len) > dataPackSize || htons(pkt->len) < ackSize) {
+		//fprintf(stderr, "got invalid packet length %d\n", ntohs(pkt->len));
+		return;
+	} 
 	packet_t* newpack = malloc(ntohs(pkt->len));
 	memcpy(newpack, pkt, ntohs(pkt->len));
 	newpack->cksum = 0;
@@ -368,8 +373,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 
 	// check for corrupted packet
 	if (newpack->cksum != pkt->cksum) {
-		//fprintf(stderr, "Corrupted Data");
-		return;
+		fprintf(stderr, "Corrupted Data");
 	}
 	// Check for corrupted data
 	//fprintf(stderr, "cksum=%d, checksum=%d", cksum(pkt, pkt_len), n);
@@ -433,7 +437,7 @@ void
 rel_read (rel_t *s)
 {
 	packet_t* pack = malloc(sizeof(packet_t));
-	while (s->eof_seqnum != 1) {
+	while (s->eof_seqnum == 0) {
 		if (s->senderbuffer[s->window_size - 1] != NULL) {
 			break;
 		}
