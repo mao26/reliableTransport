@@ -409,7 +409,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 			rel_sendack(r);
 		}
 		else if (ntohl(pkt->seqno) > r->rec_sw->laf) {
-			fprintf(stderr, "Packet is greater than largest acceptable frame");
+			//fprintf(stderr, "Packet is greater than largest acceptable frame");
 		}
 
 
