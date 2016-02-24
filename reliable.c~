@@ -15,8 +15,13 @@
 #include <signal.h>
 #include "rlib.h"
 
-static int quit = 0;
+//static int quit = 0;
 void iterPackNAdd(packet_t * pack, rel_t * s);
+//static int counter = 0;
+//static packet_t* windowfull = NULL;
+static int eofrec = 0;
+static int eofread = 0;
+static int eofseqno = 0;
 
 struct packetnode {
 	int length;
@@ -25,19 +30,19 @@ struct packetnode {
 };
 
 struct rec_slidingWindow {
-	int rws; // upper boaund on no. of out-of-order frames that the receiver is willing to accept
-	int laf; // seqNum of largest acceptable frame
-	int lfr; // seqNum of last frame received
-	int laf_min_lfr; // laf - lfr <= rws
-	struct packetnode* head;
+	uint32_t rws; // upper bound on no. of out-of-order frames that the receiver is willing to accept
+	uint32_t laf; // seqNum of largest acceptable frame
+	uint32_t lfr; // seqNum of last frame received
+	//int laf_min_lfr; // laf - lfr <= rws
+	//struct packetnode* head;
 };
 
 struct send_slidingWindow {
-	int sws; //upper bound on no. of unacked frames that sender can transmitt
-	int lar; // sequence of last ack received
-	int lfs; //last frame sent
-	int lfs_min_lar; // lfs - lar <= sws
-	struct packetnode* head;
+	uint32_t sws; //upper bound on no. of unacked frames that sender can transmitt
+	uint32_t lar; // sequence of last ack received
+	int32_t lfs; //last frame sent
+	//int lfs_min_lar; // lfs - lar <= sws
+	//struct packetnode* head;
 };
 
 
@@ -47,14 +52,20 @@ struct reliable_state {
 	rel_t **prev;
 
 	conn_t *c;			/* This is the connection object */
-	packet_t * packet;
+	//packet_t * packet;
 	/* Add your own data fields below this */
-	int seqnum;
-	char* senderbuffer;
-	char* receiverbuffer;
-	int acknum;
-	int acked;
-	int seqNumToAck; // largest seqNum not yet ack
+
+
+	packet_t** senderbuffer;
+	packet_t** receiverbuffer;
+
+	int window_size;
+	int timeout_len;
+	long* times;
+
+	//int acknum;
+	//int acked;
+	//int seqNumToAck; // largest seqNum not yet ack
 	// so if(seqNum <= seqNumToAck then frame is received
 
 	/*bc rel_t gets passed btw all functions it should keep track of our sliding windows*/
@@ -97,83 +108,105 @@ rel_create (conn_t *c, const struct sockaddr_storage *ss,
 	/* Do any other initialization you need here */
 
 	/*init our packet information*/
-	r->packet = malloc(sizeof(packet_t));
-	r->seqnum = 1;
-	r->senderbuffer = malloc(sizeof(char));
-	r->receiverbuffer = malloc(sizeof(char));
-	r->acknum = 1;
-	r->acked = 0;
+	r->window_size= cc->window;
+	r->timeout_len = cc->timeout;
+
+
+	r->senderbuffer = malloc(r->window_size * sizeof(packet_t));
+	r->receiverbuffer = malloc(r->window_size * sizeof(packet_t));
+	memset(r->senderbuffer, 0, r->window_size * sizeof(packet_t));
+	memset(r->receiverbuffer, 0, r->window_size * sizeof(packet_t));
 
 	/*init our sliding windows*/
 	r->rec_sw = xmalloc(sizeof(struct send_slidingWindow));
 	r->send_sw = xmalloc(sizeof(struct rec_slidingWindow));
-	r->rec_sw->rws = 4;//cc->window; //window size
+	r->rec_sw->rws = r->window_size;//cc->window; //window size
 	r->rec_sw->lfr = 0; //no frames recieved
 	r->rec_sw->laf = r->rec_sw->lfr + r->rec_sw->rws; //last acceptable frame
+
 	//will be our window size plus last seqnum accepted
-	r->send_sw->sws = 4;//cc->window; //window size
+	r->send_sw->sws = r->window_size;//cc->window; //window size
 	r->send_sw->lar = 0; //no acks received
 	r->send_sw->lfs = 0; //no frames sent so far
-	r->send_sw->lfs_min_lar = r->send_sw->lfs - r->send_sw->lar;
-	r->rec_sw->laf_min_lfr = r->rec_sw->laf - r->rec_sw->lfr;
 	//r->rec_sw->head = malloc(sizeof(struct packetnode));
 	//r->send_sw->head = malloc(sizeof(struct packetnode));
 	//r->send_sw->head->length = 0;
 	//r->rec_sw->head->length = 0;
-	r->seqNumToAck = 0;
+
+	r->times = malloc(r->window_size * sizeof(long));
 	return r;
 }
 
 void
 rel_destroy (rel_t *r)
 {
-	if (r->next)
-		r->next->prev = r->prev;
-	*r->prev = r->next;
-	conn_destroy (r->c);
+	if ( r->receiverbuffer[0]==NULL && r->send_sw->lar > r->send_sw->lfs && eofrec && eofread){
+		if (r->next){
+			r->next->prev = r->prev;	
+		}
+		*r->prev = r->next;
+		conn_destroy (r->c);
 
-	//fprintf(stderr,"rel_destroy\n");
-	/* Free any other allocated memory here */
-	free(r->senderbuffer);
-	free(r->receiverbuffer);
-	free(r->packet);
+		free(r->senderbuffer);
+		free(r->receiverbuffer);
+		free(r->times);
+		free(r);
+	}
 }
 
 /* Signal Handler for SIGINT */
+/*
 void sigintHandler(int sig_num)
 {
 	//signal(SIGINT, sigintHandler);
 	if (quit == 1) {
 		exit(0);
 	}
-	fprintf(stderr, "\n Cannot be terminated using Ctrl+C \n");
+	//fprintf(stderr, "\n Cannot be terminated using Ctrl+C \n");
 	quit = 1;
 	//fflush(stdout);
-}
-
+}*/
+/*
 void rec_deletenodes(rel_t* r) {
-	while(ntohl(r->rec_sw->head->packet->seqno) < r->rec_sw->lfr) {
+	//fprintf(stderr,"\ninitial seqno:%d, lfr:%d",ntohl(r->rec_sw->head->packet->seqno),r->rec_sw->lfr);
+	while (ntohl(r->rec_sw->head->packet->seqno) <= r->rec_sw->lfr) {
 		struct packetnode * temp = r->rec_sw->head;
 		r->rec_sw->head = r->rec_sw->head->next;
 		free(temp);
-		fprintf(stderr,"\ndeleted rec_sw head");
+		//fprintf(stderr,"\ndeleted rec_sw head seqno:%d, lfr:%d",ntohl(r->rec_sw->head->packet->seqno),r->rec_sw->lfr);
 	}
-}
-
+}*/
+/*
 void update_rec_sw(rel_t* r) {
 	struct packetnode* runner = r->rec_sw->head;
 	int counter = r->rec_sw->lfr;
-	fprintf(stderr," seqno:%d, counter:%d",ntohl(runner->packet->seqno),counter);
-	while (runner->next!=NULL && ntohl(runner->packet->seqno)==(counter+1)) {
+	while (runner->next != NULL && ntohl(runner->packet->seqno) == (counter + 1)) {
 		runner = runner->next;
 		counter++;
 	}
-	r->seqNumToAck = counter+1;
-	r->rec_sw->lfr = (r->seqNumToAck)-1;
+	//fprintf(stderr,"seqno:%d, counter:%d",ntohl(runner->packet->seqno),counter);
+	r->seqNumToAck = counter + 2;
+	r->rec_sw->lfr = (r->seqNumToAck) - 2;
 	r->rec_sw->laf = r->rec_sw->lfr + r->rec_sw->rws;
 	rec_deletenodes(r);
-}
-
+}*/
+/*
+void retransmitSpecificPacket(rel_t * s, int seqnum)
+{
+	struct packetnode * current = s->send_sw->head;
+	if (current == NULL) {
+		//fprintf(stderr, "you're asking to transmit a packet that doesn't exist");
+		return;
+	}
+	while (ntohl(current->packet->seqno) != seqnum) {
+		if (current->next == NULL) {
+			//fprintf(stderr, "you're asking to transmit a packet that doesn't exist");
+		}
+		current = current->next;
+	}
+	conn_sendpkt(s->c, current->packet, sizeof(packet_t));
+}*/
+/*
 int iter_PackNAdd(packet_t * pack, rel_t * s)
 {
 	struct packetnode* current = s->send_sw->head;
@@ -189,14 +222,15 @@ int iter_PackNAdd(packet_t * pack, rel_t * s)
 		current = current -> next;
 		count++;
 	}
-	fprintf(stderr, "last frame sent: %d", s->send_sw->lfs);
+	//fprintf(stderr, "last frame sent: %d", s->send_sw->lfs);
 	if (count >= s->send_sw->sws) {
+		windowfull = pack;
 		return 0;
 	}
 	current = malloc(sizeof(struct packetnode));
 	current->next = NULL;
 	current->packet = pack;
-	current->length = count+1;
+	current->length = count + 1;
 	if (prev == NULL) {
 		s->send_sw->head = current;
 	}
@@ -206,8 +240,8 @@ int iter_PackNAdd(packet_t * pack, rel_t * s)
 	conn_sendpkt(s->c, pack, sizeof(packet_t));
 	s->send_sw->lfs = ntohl(pack->seqno);
 	return 1;
-}
-
+}*/
+/*
 int rec_PackNAdd(packet_t * pack, rel_t * s)
 {
 	struct packetnode* current = s->rec_sw->head;
@@ -219,9 +253,9 @@ int rec_PackNAdd(packet_t * pack, rel_t * s)
 		}
 		prev = current;
 		current = current -> next;
+
 	}
-	fprintf(stderr, "last frame received: %d", s->rec_sw->lfr);
-	if (prev!=NULL && (ntohl(prev->packet->seqno) == ntohl(pack->seqno))) {
+	if (prev != NULL && (ntohl(prev->packet->seqno) == ntohl(pack->seqno))) {
 		return 0;
 	}
 	//if (count >= s->rec_sw->rws) {
@@ -229,7 +263,9 @@ int rec_PackNAdd(packet_t * pack, rel_t * s)
 	//}
 	struct packetnode* new = malloc(sizeof(struct packetnode));
 	new->next = current;
-	new->packet = pack;
+	packet_t *newpack = malloc(sizeof(packet_t));
+	memcpy(newpack, pack, sizeof(packet_t));
+	new->packet = newpack;
 	new->length = 1;
 	if (prev == NULL) {
 		s->rec_sw->head = new;
@@ -237,11 +273,9 @@ int rec_PackNAdd(packet_t * pack, rel_t * s)
 	else {
 		prev->next = new;
 	}
-	//conn_sendpkt(s->c, pack, sizeof(packet_t));
-	//s->rec_sw->lfs = ntohl(pack->seqno);
 	update_rec_sw(s);
 	return 1;
-}
+}*/
 
 /* This function only gets called when the process is running as a
  * server and must handle connections from multiple clients.  You have
@@ -260,18 +294,35 @@ rel_demux (const struct config_common *cc,
 
 void
 rel_sendack(rel_t *r) {
-	fprintf(stderr,"sendack");
-	packet_t* ackpack = malloc(sizeof(packet_t));
+	//fprintf(stderr,"sendack");
+	packet_t *ackpack = malloc(sizeof(*ackpack));
+	memset(ackpack, 0, sizeof(*ackpack));
 	ackpack->cksum = 0;
 	//r->acknum++; //Not sure if this is necessary
-	ackpack->ackno = htonl(r->seqNumToAck);
-	ackpack->len = htons(8); //not sure if this is correct
-	ackpack->cksum = cksum(ackpack, ntohs(ackpack->len));
-	conn_sendpkt(r->c, ackpack, sizeof(packet_t));
+	ackpack->ackno = htonl((r->rec_sw->lfr + 1));
+	ackpack->len = htons(sizeof(struct ack_packet)); //not sure if this is correct
+	ackpack->cksum = cksum(ackpack, sizeof(struct ack_packet));
+	conn_sendpkt(r->c, ackpack, sizeof(struct ack_packet));
+	free(ackpack);
+
 }
+
+long long current_timestamp() {
+    struct timeval te; 
+    gettimeofday(&te, NULL); // get current time
+    long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000; // caculate milliseconds
+    // printf("milliseconds: %lld\n", milliseconds);
+    return milliseconds;
+}
+
+void send_packet(packet_t* pkt, rel_t* s, int index, int len) {
+	s->times[index] = current_timestamp();
+	conn_sendpkt(s->c, pkt, len);
+}
+/*
 void
 rel_sendeof(rel_t *r) {
-	fprintf(stderr,"UPDATE THIS");
+	//fprintf(stderr,"UPDATE THIS");
 	packet_t* eofpack = malloc(sizeof(packet_t));
 	eofpack->cksum = 0;
 	eofpack->ackno = htonl(r->acknum);
@@ -280,155 +331,183 @@ rel_sendeof(rel_t *r) {
 	eofpack->cksum = cksum(eofpack, ntohs(eofpack->len));
 	conn_sendpkt(r->c, eofpack, sizeof(packet_t));
 	r->seqnum++;
-}
-
+}*/
+/*
 void send_deletenodes(rel_t* r) {
-	while(ntohl(r->send_sw->head->packet->seqno) < r->send_sw->lar) {
+	//fprintf(stderr,"deletenodes called");
+	//fprintf(stderr,"\ninitial seqno:%d, lar:%d",ntohl(r->send_sw->head->packet->seqno),r->send_sw->lar);
+	while (ntohl(r->send_sw->head->packet->seqno) < r->send_sw->lar) {
 		struct packetnode * temp = r->send_sw->head;
-		r->send_sw->head=r->send_sw->head->next;
+		r->send_sw->head = r->send_sw->head->next;
 		free(temp);
-		fprintf(stderr,"\ndeleted send_sw head");
+		//fprintf(stderr,"\ndeleted send_sw head");
 	}
-}
+}*/
 
 void
 rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 {
-	//fprintf(stderr, "\nrecvpkt: %s\n", pkt->data);
+	//fprintf(stderr, "\nrecvpkt len: %d\n", ntohs(pkt->len));
 	//fprintf(stderr, "my window size is %d", r->rec_sw->rws);
 	// Still need check for corrupted packet with checksum
-	int checksum = pkt->cksum;
-	int pkt_len = ntohs(pkt->len);
-	int pkt_seqno = ntohl(pkt->seqno);
-	pkt->cksum = 0;
+	//int checksum = pkt->cksum;
+	//int pkt_len = ntohs(pkt->len);
+	//int pkt_seqno = ntohl(pkt->seqno);
+	//pkt->cksum = 0;
+	int ackSize = sizeof(struct ack_packet);
+	int dataPackSize = sizeof(pkt->data) + 12;
+	if (htons(pkt->len) > dataPackSize || htons(pkt->len) < ackSize) {
+		return;
+	} 
+	packet_t* newpack = malloc(ntohs(pkt->len));
+	memcpy(newpack, pkt, ntohs(pkt->len));
+	newpack->cksum = 0;
+	newpack->cksum = cksum(newpack, ntohs(newpack->len));
+
+	// check for corrupted packet
+	if (newpack->cksum != pkt->cksum) {
+		fprintf(stderr, "Corrupted Data");
+	}
 	// Check for corrupted data
-	//fprintf(stderr, "cksum=%d, checksum=%d", cksum(pkt, pkt_len), checksum);
-	if (n != 512 || (cksum(pkt, pkt_len) != checksum)) {
+	//fprintf(stderr, "cksum=%d, checksum=%d", cksum(pkt, pkt_len), n);
+	/*if (n != 512 || (cksum(pkt, pkt_len) != checksum)) {
 		//drop pack
-		fprintf(stderr, "dropped");
+		//fprintf(stderr, "dropped");
 		return;
-	}
-	else if (ntohs(pkt->len) == 8) {
+	}*/
+	else if (ntohs(pkt->len) < sizeof(struct ack_packet) || ntohs(pkt->len) > sizeof(pkt->data)+12) {
+		fprintf(stderr, "completely messed up packet");
+		return;
+	} 
+	//Handle Ack Packet
+	else if (ntohs(pkt->len) == sizeof(struct ack_packet)) {
 		//fprintf(stderr,"ackkkkkkkkkkkkkk");
-		r->send_sw->lar=ntohl(pkt->ackno);
-		send_deletenodes(r);
+		if (ntohl(pkt->ackno) > r->send_sw->lar) {
+			r->send_sw->lar = ntohl(pkt->ackno);
+		}
+		if (ntohl(pkt->ackno) == eofseqno + 1) {
+			eofread = 1;
+		}
+		while (r->senderbuffer[0] != NULL) {
+			int i;
+			if  (ntohl(r->senderbuffer[0]->seqno) >= r->send_sw->lar) {
+				break;
+			}
+			for (i = 0; i < r->window_size - 1; i++) {
+				r->senderbuffer[i] = r->senderbuffer[i + 1];
+				r->times[i] = r->times[i + 1];
+			}
+			r->senderbuffer[r->window_size - 1] = NULL;
+			r->times[r->window_size - 1] = 0;
+		}
+		rel_read(r);
 	}
-	else if (ntohs(pkt->len) == 12) {
-		rel_sendack(r);
-		conn_output(r->c, (void *)(r->receiverbuffer), 0);
-		//rel_destroy(r);
-		return;
-	}
-	else if (ntohs(pkt->len) > 12) {
-		if (pkt_seqno <= r->rec_sw->lfr || pkt_seqno > r->rec_sw->laf)
-		{
-			//frame is outside rec window size-rws and it is
-			//discarded
-			//may need to retransmitt
-			fprintf(stderr,"outside of rec window lfr=%d, laf=%d", r->rec_sw->lfr, r->rec_sw->laf);
-		} else if (r->rec_sw->lfr < pkt_seqno && pkt_seqno <= r->rec_sw->laf)
-		{
-			//frame is accepted
-			rec_PackNAdd(pkt, r);
-			rel_output(r);
-			//int dataindex = 0;
-			//fprintf(stderr,"\nreceiving::::::::: %d \n",(ntohs(pkt->len)));
-			fprintf(stderr, "\nwindow size:: %d \n", r->rec_sw->rws);
-			//if (pkt_seqno <= r->seqNumToAck)
-			//{
-				// all frames, even if higher number of packets have been received will be received and we send an ack
-				//not sure if seqNumToAck needs to be incremented
+	// Handle a data packet
+	else {
+		//fprintf(stderr, "datapacket!!");
+		if (ntohl(pkt->seqno) > r->rec_sw->laf) {
+			fprintf(stderr, "Packet is greater than largest acceptable frame");
+		}
+		else if (ntohl(pkt->seqno) <= r->rec_sw->lfr) {
 			rel_sendack(r);
-			//}
+			fprintf(stderr, "Already received");
 		}
 
+		else {
+			if (ntohs(pkt->len) == 12) {
+				eofrec = 1;
+			}
+			int in = (ntohl(pkt->seqno) - (r->rec_sw->lfr + 1)) % (r->window_size);
+			packet_t* temppack = malloc(sizeof(packet_t));
+			memcpy(temppack, pkt, sizeof(packet_t));
+			r->receiverbuffer[in] = temppack;
+			rel_output(r);
+			rel_sendack(r);
 
-
+		}
 	}
+
 }
 
 void
 rel_read (rel_t *s)
 {
-	if (quit == 0) {
-		signal(SIGINT, sigintHandler);
-	}
-
-	int r = conn_input(s->c, (void *)(s->senderbuffer), sizeof(char));
-	if (r == -1) {
-		fprintf(stderr, "eofffffffffffffffffffffff");
-		rel_sendeof(s);
-		//rel_destroy(s);
-		return;
-	}
-	int dataindex = 0;
-	packet_t* pack = malloc(sizeof(packet_t));
-	pack->cksum = 0;
-	pack->ackno = htonl(1);
-	pack->seqno = htonl(s->seqnum);
-	//strcpy(pack->data, senderbuffer);
-
-	while (r > 0) {
-		pack->data[dataindex] = *(s->senderbuffer);
-		//fprintf(stderr,"\nintermediate: %c",*(s->senderbuffer));
-		r = conn_input(s->c, (void *)(s->senderbuffer), 1);
-		dataindex++;
-		if (dataindex == 500) {
-			pack->len = htons(12 + sizeof(char) * strlen(pack->data));
-			pack->cksum = cksum(pack, ntohs(pack->len));
-			s->acked = 0;
-			//fprintf(stderr, "\nsendpkt: %s\n", pack->data);
-			if (iter_PackNAdd(pack, s) == 0) {
-				fprintf(stderr, "head of send_sw: %s", s->send_sw->head->packet->data);
-				return;
-			}
-			////conn_sendpkt(s->c, pack, sizeof(packet_t));
-			s->seqnum++;
-			//s->senderbuffer[0]="\0";
-			//free(pack);
-			pack = malloc(sizeof(packet_t));
-			pack->cksum = 0;
-			pack->ackno = htonl(1);
-			pack->seqno = htonl(s->seqnum);
-			dataindex = 0;
-			//s->packet = pack;
+	//packet_t* pack = malloc(sizeof(packet_t));
+	while (eofseqno == 0) {
+		if (s->senderbuffer[s->window_size - 1] != NULL) {
+			break;
 		}
-	}
-	if (r == -1) {
-		fprintf(stderr, "eofffffffffffffffffffffffffffffffff");
-		rel_sendeof(s);
-		//rel_destroy(s);
-		return;
-	}
-	//fprintf(stderr, "\nsendpkt: %s\n", pack->data);
-	//pack->data[dataindex]='\0';
-	pack->len = htons(12 + sizeof(char) * strlen(pack->data));
-	pack->cksum = cksum(pack, ntohs(pack->len));
-	s->acked = 0;
-	//conn_sendpkt(s->c, pack, sizeof(packet_t));
-	int notfull = iter_PackNAdd(pack, s);
-	fprintf(stderr, "head of send_sw: %s", s->send_sw->head->packet->data);
-	if (notfull == 0) {
-		return;
-	}
-	//free(pack);
-	s->seqnum++;
+		packet_t *temp = malloc(sizeof(packet_t));
+		int input = conn_input(s->c, temp->data, sizeof(temp->data));
+		int inputLen = input + 12;
 
+		if (input == -1) {
+			eofseqno = s->send_sw->lfs + 1;
+			inputLen = 12;
+		}
+		else if (input == 0) {
+			break;
+		}
+		//memcpy(temp->data, pack->data, sizeof(temp->data));
+		//memset(pack, 0, sizeof(packet_t));
 
-	//fprintf(stderr, "\n");
+		int ind = 0;
+		while (s->senderbuffer[ind] != NULL) {
+			ind ++;
+		}
+		s->senderbuffer[ind] = temp;
+
+		temp->cksum = 0;
+		temp->len = htons(inputLen);
+		temp->seqno = htonl(s->send_sw->lfs + 1);
+		temp->ackno = htonl(s->send_sw->lar);
+		temp->cksum = cksum(temp, inputLen);
+
+		send_packet(temp, s, ind, inputLen);
+		s->send_sw->lfs += 1;
+
+	}
 }
 
 void
 rel_output (rel_t *r)
 {
-	//fprintf(stderr, "reloutputtt\n");
+	while (r->receiverbuffer[0] != NULL) {
+		int pack_size = ntohs(r->receiverbuffer[0]->len) - 12;
+		int avail_buf_space = conn_bufspace(r->c);
+		if (pack_size > avail_buf_space) {
+			return;
+		}
+		conn_output(r->c, r->receiverbuffer[0]->data, pack_size);
 
+		r->rec_sw->lfr = ntohl(r->receiverbuffer[0]->seqno);
+		r->rec_sw->laf = r->rec_sw->lfr + r->window_size;
+		int i;
+		for (i = 0; i < r->window_size - 1; i++) {
+			r->receiverbuffer[i] = r->receiverbuffer[i + 1];
+		}
+		r->receiverbuffer[r->window_size - 1] = NULL;
+	}
 }
 
 void
 rel_timer ()
 {
-	/* Retransmit any packets that need to be retransmitted */
-	//fprintf(stderr, "hello%s\n", rel_list->packet->data);
+	int i;
+	for (i = 0; i < rel_list->window_size; i++) {
+		if (rel_list->times[i] > 0) {
+			long currentTime = current_timestamp();
+			long elapsedTime = currentTime - rel_list->times[i];
+			//fprintf(stderr, "pos:%d, time:%lu\n", i, rel_list->times[i]);
+			if (elapsedTime > rel_list->timeout_len) {
+				//fprintf(stderr, "packet seqno %d TIMEOUT, retransmitting!\n",ntohl(rel_list->senderbuffer[i]->seqno));
+				send_packet(rel_list->senderbuffer[i], rel_list, i, ntohs(rel_list->senderbuffer[i]->len));
+			}
+		}
+
+	}
+	rel_destroy(rel_list);
 
 }
+
+

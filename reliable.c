@@ -61,6 +61,7 @@ struct reliable_state {
 
 	int window_size;
 	int timeout_len;
+	long* times;
 
 	//int acknum;
 	//int acked;
@@ -70,8 +71,6 @@ struct reliable_state {
 	/*bc rel_t gets passed btw all functions it should keep track of our sliding windows*/
 	struct send_slidingWindow * send_sw;
 	struct rec_slidingWindow * rec_sw;
-
-	long* times;
 };
 rel_t *rel_list;
 
@@ -135,7 +134,6 @@ rel_create (conn_t *c, const struct sockaddr_storage *ss,
 	//r->rec_sw->head->length = 0;
 
 	r->times = malloc(r->window_size * sizeof(long));
-	memset(r->times, 0, r->window_size * sizeof(long));
 	return r;
 }
 
@@ -309,12 +307,15 @@ rel_sendack(rel_t *r) {
 
 }
 
+long long current_timestamp() {
+    struct timeval te; 
+    gettimeofday(&te, NULL);
+    long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000;
+    return milliseconds;
+}
+
 void send_packet(packet_t* pkt, rel_t* s, int index, int len) {
-	struct timespec* tempTime = malloc(sizeof(struct timespec));
-	clock_gettime(CLOCK_MONOTONIC, tempTime);
-	long currentTime = tempTime->tv_sec * 1000000000 + tempTime->tv_nsec;
-	s->times[index] = currentTime;
-	free(tempTime);
+	s->times[index] = current_timestamp();
 	conn_sendpkt(s->c, pkt, len);
 }
 /*
@@ -494,16 +495,13 @@ rel_timer ()
 	int i;
 	for (i = 0; i < rel_list->window_size; i++) {
 		if (rel_list->times[i] > 0) {
-			struct timespec* tempTime = malloc(sizeof(struct timespec));
-			clock_gettime(CLOCK_MONOTONIC, tempTime);
-			long currentTime = tempTime->tv_sec * 1000000000 + tempTime->tv_nsec;
+			long currentTime = current_timestamp();
 			long elapsedTime = currentTime - rel_list->times[i];
-			//fprintf(stderr, "pos:%d, time:%lu\n", i, rel_list->timearray[i]);
-			if (elapsedTime > rel_list->timeout_len * 1000000) {
+			//fprintf(stderr, "pos:%d, time:%lu\n", i, rel_list->times[i]);
+			if (elapsedTime > rel_list->timeout_len) {
 				//fprintf(stderr, "packet seqno %d TIMEOUT, retransmitting!\n",ntohl(rel_list->senderbuffer[i]->seqno));
 				send_packet(rel_list->senderbuffer[i], rel_list, i, ntohs(rel_list->senderbuffer[i]->len));
 			}
-			free(tempTime);
 		}
 
 	}
