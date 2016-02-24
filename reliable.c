@@ -16,9 +16,12 @@
 #include "rlib.h"
 
 //static int quit = 0;
-//void iterPackNAdd(packet_t * pack, rel_t * s);
+void iterPackNAdd(packet_t * pack, rel_t * s);
 //static int counter = 0;
 //static packet_t* windowfull = NULL;
+static int eofrec = 0;
+static int eofread = 0;
+static int eofseqno = 0;
 
 struct packetnode {
 	int length;
@@ -51,9 +54,7 @@ struct reliable_state {
 	conn_t *c;			/* This is the connection object */
 	//packet_t * packet;
 	/* Add your own data fields below this */
-	int eof_seqnum;
-	int eof_rec;
-	int eof_read;
+
 
 	packet_t** senderbuffer;
 	packet_t** receiverbuffer;
@@ -132,9 +133,6 @@ rel_create (conn_t *c, const struct sockaddr_storage *ss,
 	//r->send_sw->head = malloc(sizeof(struct packetnode));
 	//r->send_sw->head->length = 0;
 	//r->rec_sw->head->length = 0;
-	r->eof_seqnum = 0;
-	r->eof_read = 0;
-	r->eof_rec = 0;
 
 	r->times = malloc(r->window_size * sizeof(long));
 	memset(r->times, 0, r->window_size * sizeof(long));
@@ -144,17 +142,17 @@ rel_create (conn_t *c, const struct sockaddr_storage *ss,
 void
 rel_destroy (rel_t *r)
 {
-	if (r->eof_rec && r->eof_read
-			&& r->send_sw->lar > r->send_sw->lfs && r->receiverbuffer[0]==NULL) {
-	if (r->next)
-		r->next->prev = r->prev;
-	*r->prev = r->next;
-	conn_destroy (r->c);
+	if ( r->receiverbuffer[0]==NULL && r->send_sw->lar > r->send_sw->lfs && eofrec && eofread){
+		if (r->next){
+			r->next->prev = r->prev;	
+		}
+		*r->prev = r->next;
+		conn_destroy (r->c);
 
-	free(r->senderbuffer);
-	free(r->receiverbuffer);
-	free(r->times);
-	free(r);
+		free(r->senderbuffer);
+		free(r->receiverbuffer);
+		free(r->times);
+		free(r);
 	}
 }
 
@@ -373,13 +371,14 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 		return;
 	}*/
 	else if (ntohs(pkt->len) < sizeof(struct ack_packet) || ntohs(pkt->len) > sizeof(pkt->data)+12) {
+		fprintf(stderr, "completely messed up packet");
 		return;
 	} 
 	//Handle Ack Packet
 	else if (ntohs(pkt->len) == sizeof(struct ack_packet)) {
-		//fprintf(stderr,"ackkkkkkkkkkkkkk");
-		if (ntohl(pkt->ackno) == r->eof_seqnum + 1) {
-			r->eof_read = 1;
+		fprintf(stderr,"ackkkkkkkkkkkkkk");
+		if (ntohl(pkt->ackno) == eofseqno + 1) {
+			eofread = 1;
 		}
 		if (ntohl(pkt->ackno) > r->send_sw->lar) {
 			r->send_sw->lar = ntohl(pkt->ackno);
@@ -400,17 +399,18 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	}
 	// Handle a data packet
 	else {
-		if (ntohl(pkt->seqno) <= r->rec_sw->lfr) {///////////////////////////////////////////
+		//fprintf(stderr, "datapacket!!");
+		if (ntohl(pkt->seqno) > r->rec_sw->laf) {
+			fprintf(stderr, "Packet is greater than largest acceptable frame");
+		}
+		else if (ntohl(pkt->seqno) <= r->rec_sw->lfr) {///////////////////////////////////////////
 			rel_sendack(r);
+			fprintf(stderr, "Already received");
 		}
-		else if (ntohl(pkt->seqno) > r->rec_sw->laf) {
-			//fprintf(stderr, "Packet is greater than largest acceptable frame");
-		}
-
 
 		else {
 			if (ntohs(pkt->len) == 12) {
-				r->eof_rec = 1;
+				eofrec = 1;
 			}
 			int in = (ntohl(pkt->seqno) - (r->rec_sw->lfr + 1)) % (r->window_size);
 			packet_t* temppack = malloc(sizeof(packet_t));
@@ -428,7 +428,7 @@ void
 rel_read (rel_t *s)
 {
 	packet_t* pack = malloc(sizeof(packet_t));
-	while (s->eof_seqnum < 1) {/////////////////////////
+	while (eofseqno < 1) {/////////////////////////
 		if (s->senderbuffer[s->window_size - 1] != NULL) {
 			break;
 		}
@@ -437,7 +437,7 @@ rel_read (rel_t *s)
 		int inputLen = input + 12;
 		packet_t *temp = malloc(sizeof(packet_t));
 		if (input == -1) {////////////////////////////////////////
-			s->eof_seqnum = s->send_sw->lfs + 1;
+			eofseqno = s->send_sw->lfs + 1;
 			inputLen = 12;
 		}
 		else if (input == 0) {
