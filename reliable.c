@@ -49,7 +49,7 @@ struct reliable_state {
 	rel_t **prev;
 
 	conn_t *c;			/* This is the connection object */
-	packet_t * packet;
+	//packet_t * packet;
 	/* Add your own data fields below this */
 	int eof_seqnum;
 	int eof_rec;
@@ -317,7 +317,6 @@ void verify_free(rel_t* r) {
 }
 
 void send_packet(packet_t* pkt, rel_t* s, int index, int len) {
-	//save the time in a temp struct
 	struct timespec* tempTime = malloc(sizeof(struct timespec));
 	clock_gettime(CLOCK_MONOTONIC, tempTime);
 	long currentTime = tempTime->tv_sec * 1000000000 + tempTime->tv_nsec;
@@ -378,6 +377,9 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 		//fprintf(stderr, "dropped");
 		return;
 	}*/
+	else if (ntohs(pkt->len) < sizeof(struct ack_packet) || ntohs(pkt->len) > sizeof(pkt->data)+12) {
+		return;
+	} 
 	//Handle Ack Packet
 	else if (ntohs(pkt->len) == sizeof(struct ack_packet)) {
 		//fprintf(stderr,"ackkkkkkkkkkkkkk");
@@ -403,7 +405,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	}
 	// Handle a data packet
 	else {
-		if (ntohl(pkt->seqno) <= r->rec_sw->lfr) {
+		if (ntohl(pkt->seqno) <= r->rec_sw->lfr) {///////////////////////////////////////////
 			rel_sendack(r);
 		}
 		else if (ntohl(pkt->seqno) > r->rec_sw->laf) {
@@ -419,9 +421,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 			packet_t* temppack = malloc(sizeof(packet_t));
 			memcpy(temppack, pkt, sizeof(packet_t));
 			r->receiverbuffer[in] = temppack;
-
 			rel_output(r);
-
 			rel_sendack(r);
 
 		}
@@ -433,15 +433,15 @@ void
 rel_read (rel_t *s)
 {
 	packet_t* pack = malloc(sizeof(packet_t));
-	while (s->eof_seqnum != 1) {
+	while (s->eof_seqnum < 1) {/////////////////////////
 		if (s->senderbuffer[s->window_size - 1] != NULL) {
 			break;
 		}
 
 		int input = conn_input(s->c, pack->data, sizeof(pack->data));
 		int inputLen = input + 12;
-		packet_t *temp = malloc(sizeof(*temp));
-		if (input == -1) {
+		packet_t *temp = malloc(sizeof(packet_t));
+		if (input == -1) {////////////////////////////////////////
 			s->eof_seqnum = s->send_sw->lfs + 1;
 			inputLen = 12;
 		}
@@ -449,7 +449,7 @@ rel_read (rel_t *s)
 			break;
 		}
 		memcpy(temp->data, pack->data, sizeof(temp->data));
-		memset(pack, 0, sizeof(*pack));
+		memset(pack, 0, sizeof(packet_t));
 
 		int ind = 0;
 		while (s->senderbuffer[ind] != NULL) {
@@ -509,13 +509,10 @@ rel_timer ()
 			clock_gettime(CLOCK_MONOTONIC, tempTime);
 			long currentTime = tempTime->tv_sec * 1000000000 + tempTime->tv_nsec;
 			long elapsedTime = currentTime - rel_list->times[i];
-			//fprintf(stderr, "time in position %d is %lu, current time is %lu, elapsed is %lu\n", i, rel_list->timearray[i], currtime, elapsed);
-			if (elapsedTime > rel_list->timeout_len * 1000000) { //convert milli to nanosec
-			//retransmit packet
-				fprintf(stderr, "packet seqno %d TIMEOUT, retransmitting!\n",
-						ntohl(rel_list->senderbuffer[i]->seqno));
-				send_packet(rel_list->senderbuffer[i], rel_list, i,
-						ntohs(rel_list->senderbuffer[i]->len));
+			//fprintf(stderr, "pos:%d, time:%lu\n", i, rel_list->timearray[i]);
+			if (elapsedTime > rel_list->timeout_len * 1000000) {
+				//fprintf(stderr, "packet seqno %d TIMEOUT, retransmitting!\n",ntohl(rel_list->senderbuffer[i]->seqno));
+				send_packet(rel_list->senderbuffer[i], rel_list, i, ntohs(rel_list->senderbuffer[i]->len));
 			}
 			free(tempTime);
 		}
