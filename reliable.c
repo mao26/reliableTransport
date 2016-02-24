@@ -376,18 +376,18 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	} 
 	//Handle Ack Packet
 	else if (ntohs(pkt->len) == sizeof(struct ack_packet)) {
-		fprintf(stderr,"ackkkkkkkkkkkkkk");
-		if (ntohl(pkt->ackno) == eofseqno + 1) {
-			eofread = 1;
-		}
+		//fprintf(stderr,"ackkkkkkkkkkkkkk");
 		if (ntohl(pkt->ackno) > r->send_sw->lar) {
 			r->send_sw->lar = ntohl(pkt->ackno);
 		}
+		if (ntohl(pkt->ackno) == eofseqno + 1) {
+			eofread = 1;
+		}
 		while (r->senderbuffer[0] != NULL) {
+			int i;
 			if  (ntohl(r->senderbuffer[0]->seqno) >= r->send_sw->lar) {
 				break;
 			}
-			int i;
 			for (i = 0; i < r->window_size - 1; i++) {
 				r->senderbuffer[i] = r->senderbuffer[i + 1];
 				r->times[i] = r->times[i + 1];
@@ -403,7 +403,7 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 		if (ntohl(pkt->seqno) > r->rec_sw->laf) {
 			fprintf(stderr, "Packet is greater than largest acceptable frame");
 		}
-		else if (ntohl(pkt->seqno) <= r->rec_sw->lfr) {///////////////////////////////////////////
+		else if (ntohl(pkt->seqno) <= r->rec_sw->lfr) {
 			rel_sendack(r);
 			fprintf(stderr, "Already received");
 		}
@@ -427,24 +427,23 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 void
 rel_read (rel_t *s)
 {
-	packet_t* pack = malloc(sizeof(packet_t));
-	while (eofseqno < 1) {/////////////////////////
+	while (eofseqno < 1) {
 		if (s->senderbuffer[s->window_size - 1] != NULL) {
 			break;
 		}
-
-		int input = conn_input(s->c, pack->data, sizeof(pack->data));
-		int inputLen = input + 12;
 		packet_t *temp = malloc(sizeof(packet_t));
-		if (input == -1) {////////////////////////////////////////
+		int input = conn_input(s->c, temp->data, sizeof(temp->data));
+		int inputLen = input + 12;
+
+		if (input == -1) {
 			eofseqno = s->send_sw->lfs + 1;
 			inputLen = 12;
 		}
 		else if (input == 0) {
 			break;
 		}
-		memcpy(temp->data, pack->data, sizeof(temp->data));
-		memset(pack, 0, sizeof(packet_t));
+		//memcpy(temp->data, pack->data, sizeof(temp->data));
+		//memset(pack, 0, sizeof(packet_t));
 
 		int ind = 0;
 		while (s->senderbuffer[ind] != NULL) {
@@ -462,8 +461,6 @@ rel_read (rel_t *s)
 		s->send_sw->lfs += 1;
 
 	}
-	free(pack);
-
 }
 
 void
@@ -472,26 +469,19 @@ rel_output (rel_t *r)
 	while (r->receiverbuffer[0] != NULL) {
 		int pack_size = ntohs(r->receiverbuffer[0]->len) - 12;
 		int avail_buf_space = conn_bufspace(r->c);
-
 		if (pack_size > avail_buf_space) {
 			return;
-
 		}
-
 		conn_output(r->c, r->receiverbuffer[0]->data, pack_size);
 
 		r->rec_sw->lfr = ntohl(r->receiverbuffer[0]->seqno);
 		r->rec_sw->laf = r->rec_sw->lfr + r->window_size;
-
 		int i;
 		for (i = 0; i < r->window_size - 1; i++) {
 			r->receiverbuffer[i] = r->receiverbuffer[i + 1];
 		}
-
 		r->receiverbuffer[r->window_size - 1] = NULL;
 	}
-	
-
 }
 
 void
