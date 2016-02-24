@@ -355,7 +355,6 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 	int ackSize = sizeof(struct ack_packet);
 	int dataPackSize = sizeof(pkt->data) + 12;
 	if (htons(pkt->len) > dataPackSize || htons(pkt->len) < ackSize) {
-		//fprintf(stderr, "got invalid packet length %d\n", ntohs(pkt->len));
 		return;
 	} 
 	packet_t* newpack = malloc(ntohs(pkt->len));
@@ -431,8 +430,8 @@ rel_recvpkt (rel_t *r, packet_t *pkt, size_t n)
 void
 rel_read (rel_t *s)
 {
-	packet_t* pack = malloc(sizeof(packet_t));
-	while (s->eof_seqnum == 0) {
+	//packet_t* pack = malloc(sizeof(packet_t));
+	while (eofseqno == 0) {
 		if (s->senderbuffer[s->window_size - 1] != NULL) {
 			break;
 		}
