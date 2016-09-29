@@ -1,0 +1,46 @@
+package Model;
+
+import java.util.ArrayList;
+
+public class Node implements CommandNode {
+
+	String commandType;
+	String commandName;
+	int noOfChildren;
+	Node nextExecuteCommands;
+	int[] commandsArgs;
+
+	public Node(String type, String name, int args) {
+		this.commandType = type;
+		this.commandName = name;
+		this.noOfChildren = args;
+		/* this will hold the current commands needed arguments to execute */
+		this.commandsArgs = new int[noOfChildren];
+	}
+
+	public Node addNextCommands(String arg1, String arg2, int arg3) {
+		/*
+		 * this should hold any commands that must be executed before we
+		 * finishing executing the current command
+		 */
+		this.nextExecuteCommands = new Node(arg1, arg2, arg3);
+		return nextExecuteCommands;
+	}
+
+	public int[] addArgs() {
+		return commandsArgs;
+	}
+
+	@Override
+	public void evaluate(String myCommand) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void intermediateCanvasUpdate() {
+		// TODO Auto-generated method stub
+
+	}
+
+}

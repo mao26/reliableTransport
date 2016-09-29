@@ -1,0 +1,56 @@
+import java.lang.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class BoardFirstAutoPlayer extends AbstractAutoPlayer {
+	public void helper(BoggleBoard board, int row, int col, List<BoardCell> list, ILexicon lex, StringBuilder strbuild, int len) {
+//		if (idx >= tempword.toString().length()) {
+//			add(tempword.toString());
+//			return;
+//		}
+		if (row > board.size() || col > board.size() || row<0 || col<0) {
+			return;
+		}
+//		if(board.getFace(row,col).equals(strbuild.toString().charAt(idx)+"")){
+//			return;
+//		}
+		if(lex.wordStatus(strbuild.toString())==LexStatus.NOT_WORD){
+			return;
+		}
+		BoardCell nCell = new BoardCell(row, col);
+//		if(lex.wordStatus(strbuild.toString())==LexStatus.PREFIX){
+//			strbuild.append(board.getFace(row,col));
+//		}
+		if(lex.wordStatus(strbuild.toString()) == LexStatus.WORD){
+			if(strbuild.length() > len){
+				add(strbuild.toString());
+			}
+		}
+		if (!list.contains(nCell)){
+			strbuild.append(nCell);
+			list.add(nCell);
+			int[] rdelta = { -1, -1, -1, 0, 0, 1, 1, 1 };
+			int[] cdelta = { -1, 0, 1, -1, 1, -1, 0, 1 };
+			for(int k = 0; k <rdelta.length; k++){
+				helper(board, row+rdelta[k], col+cdelta[k], list, lex, strbuild, len);
+				
+			}
+			strbuild.deleteCharAt(strbuild.length()-1);
+			list.remove(nCell);
+		}
+		return;
+	}
+
+	@Override
+	public void findAllValidWords(BoggleBoard board, ILexicon lex, int minLength) {
+		List<BoardCell> lista= new ArrayList();
+		lista.clear(); //or just clear();
+		StringBuilder str = new StringBuilder();
+		for(int r = 0; r <board.size(); r++){
+			for(int c = 0; c < board.size(); c++){
+				helper(board, r, c, lista, lex, str, minLength);
+			}
+		}
+	}
+
+}

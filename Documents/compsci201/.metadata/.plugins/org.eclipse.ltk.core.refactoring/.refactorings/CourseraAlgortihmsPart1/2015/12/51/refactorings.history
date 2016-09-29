@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename type &apos;StacksNQueues.Queue&apos; to &apos;QueueOfStrings&apos;&#x0A;- Original project: &apos;CourseraAlgortihmsPart1&apos;&#x0A;- Original element: &apos;StacksNQueues.Queue&apos;&#x0A;- Renamed element: &apos;StacksNQueues.QueueOfStrings&apos;&#x0A;- Update references to refactored element&#x0A;- Update textual occurrences in comments and strings" description="Rename type &apos;Queue&apos;" flags="589830" id="org.eclipse.jdt.ui.rename.type" input="/src&lt;StacksNQueues{Queue.java[Queue" matchStrategy="1" name="QueueOfStrings" qualified="false" references="true" similarDeclarations="false" stamp="1450153314558" textual="false" version="1.0"/>
+</session>

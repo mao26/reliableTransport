@@ -1,0 +1,22 @@
+
+public class MinExecuter extends GuessExecutor {
+	public static void main(String[] args){
+		
+		for(int wlength=5; wlength <= 10; wlength++){
+		    GuessExecutor ng = new GuessExecutor(wlength,10, new NaiveGuesser(false));
+		    System.out.printf("word length: %d\n",wlength);
+		    boolean ignored = ng.stress();
+		}
+	}
+	/**
+	 * Initialize a guesser to stress-test all words
+	 * @param length is length of words being stress-tested
+	 * @param misses is number of misses until hung in testing
+	 * @param guesser is the class-instance being stress-tested
+	 * @param debug specifies debugging status
+	 */
+	public MinExecutor(int length,int misses, IHangGuesser guesser, boolean debug){
+		super(length, misses, guesser, debug);
+		
+	}
+}

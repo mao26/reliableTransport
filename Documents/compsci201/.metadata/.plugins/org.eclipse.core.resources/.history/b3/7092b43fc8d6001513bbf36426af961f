@@ -1,0 +1,108 @@
+//This entire file is part of my masterpiece.
+//Mario Oliver
+
+package cellsociety_team13;
+
+import java.util.ArrayList;
+/**
+ * This class extends the rules class and implements the langtons loop simulation. It relies on the Rules class as well as the cell and the grid class.
+ */
+import java.util.List;
+
+
+import gridNCell.Grid;
+
+public class LangtonsLoop extends Rules {
+
+	private static final int EMPTY = 0;
+	private static final int CORE = 1;
+	private static final int SHEATH = 2;
+	private static final int LEFT = 3;
+	private static final int YELLOW = 4;
+	private static final int DISCONNECT = 5;
+	private static final int GUIDE = 6;
+	private static final int INFO = 7;
+	private static final int[] states = { EMPTY, CORE, SHEATH, LEFT, YELLOW, DISCONNECT, GUIDE, INFO };
+
+	private static final boolean diag = false;
+	private Grid grid;
+	private static final String[] paramNames = {};
+	private LangtonsCellChange cellRules;
+
+	public LangtonsLoop(List<Double> params, Grid grid) {
+		super(grid);
+		cellRules = new LangtonsCellChange();
+	}
+
+	public String getNeighborsStatesInOrder(Cell cell) {
+		String totalAlive = "";
+		ArrayList<Cell> neighbors = (ArrayList<Cell>) cell.getNeighbors(diag, grid);
+		int[] sortStates = new int[4];
+		int i = 0;
+		for (Cell each : neighbors) {
+			sortStates[i] = each.getCurrState();
+			i++;
+		}
+		for (int j = 0; j < sortStates.length; j++) {
+			totalAlive += sortStates[j];
+		}
+		return totalAlive;
+	}
+
+	/**
+	 * returns states
+	 * 
+	 * @return int[] of states
+	 */
+	@Override
+	public int[] getStates() {
+		return states;
+	}
+
+
+	/**
+	 * gets paramenter names
+	 * 
+	 * @return string array of param names
+	 */
+	@Override
+	public String[] getParamNames() {
+		return paramNames;
+	}
+
+	/**
+	 * updates the simulations parameters
+	 * 
+	 * @param name
+	 *            name of parameter to change
+	 * @param toSet
+	 *            double value of new parameter
+	 */
+	@Override
+	public void setParam(String name, Double toSet) {
+		return;
+	}
+
+	/**
+	 * Sets the next state of every cell based on the rules of the langtons loop
+	 * simulation
+	 * 
+	 * @param cell
+	 *            cell to check
+	 */
+	@Override
+	protected void implementRule(Cell cell) {
+		String neighborsStatesInOrder = getNeighborsStatesInOrder(cell);
+		int nextState = Integer.parseInt(cellRules.determineNextState(cell.getCurrState(), neighborsStatesInOrder));
+			cell.setNextState(nextState);
+	}
+
+	/**
+	 * return list of parameter, not needed in this simulation
+	 */
+	@Override
+	public List<Double> getParameters() {
+		return null;
+	}
+
+}

@@ -1,0 +1,16 @@
+public class FileSystem {
+	public long findUsed(int[] fileBytes, int blockBytes) {
+		long count = 0;
+		for (int i = 0; i < fileBytes.length; i++) {
+			if (fileBytes[i] != 0) {
+				return count = count + 1;
+			}
+		}
+		long blockCount = count/blockBytes;
+		if(count%blockBytes != 0){
+			blockCount++;
+		}
+		return blockCount * blockBytes;
+	}
+
+}

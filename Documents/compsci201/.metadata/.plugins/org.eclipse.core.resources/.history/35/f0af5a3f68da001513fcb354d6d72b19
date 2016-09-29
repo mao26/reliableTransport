@@ -1,0 +1,26 @@
+package Model;
+
+/*
+ * This will be used as our structure for our turtles instructions
+ * It will hold all of the nodes that make up one set of commands
+ * each new set of commands will create an instance of this syntax tree
+ */
+
+public class CommandTree {
+
+	private CommandNode root;
+
+	public CommandTree() {
+		
+	}
+
+	public void traverse() {
+
+	}
+
+	public void createTree(String[] commands) {
+		for (String eachCommand : commands) {
+			CommandNode command = new CommandNode(eachCommand);
+		}
+	}
+}

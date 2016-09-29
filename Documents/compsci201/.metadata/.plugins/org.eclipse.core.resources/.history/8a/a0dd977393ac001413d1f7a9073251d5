@@ -1,0 +1,37 @@
+import java.util.*;
+
+public class UnderCoverCoder {
+	 
+
+	public int totalNotes(String[] clips, String[] notes) {
+		// fill in code here
+		Map<Character, Interger> letters = new TreeMap<Character, Interger>();
+		for(int i = 0; i < clips.size(); i++){
+			for(int j = 0; j < clips.get(i); j++){
+				char c = clips.charAt(i);
+				if( letters.containKey())
+			}
+		}
+		
+		
+		
+		
+		
+		
+		
+		/*
+		clips = clips.toLowerCase();
+		notes = notes.toLowerCase();
+		for(String s : clips){
+			String[] s2 = s.split(" ");
+		}
+
+	}
+	public void main(String [] args){
+		totalNotes test = new totalNotes();
+		String[] clips = {"Earthquake in San Francisco","Burglary at museum in Sweden", "Poverty"};
+		String[] notes = {"Give me my money back", "I am the best coder","I is TOPCODER"};
+		System.out.println(totalNotes(clips, notes));
+		*/
+	}
+}

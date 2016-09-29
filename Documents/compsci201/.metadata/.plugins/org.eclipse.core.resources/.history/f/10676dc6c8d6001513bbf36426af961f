@@ -1,0 +1,79 @@
+//This entire file is part of my masterpiece.
+//Mario Oliver
+
+package cellsociety_team13;
+
+/**
+ * abstract class for simulation rules. All simulation rules are extensions of this class
+ */
+import java.util.List;
+import gridNCell.Grid;
+
+public abstract class Rules {
+	
+	private Grid grid;
+	
+	public Rules(Grid grid){
+		this.grid = grid;
+	}
+	/**
+	 * return all possible states for simulation
+	 * 
+	 * @return int[] of states
+	 */
+	public abstract int[] getStates();
+
+	/**
+	 * return cell grid
+	 * 
+	 * @return grid for current simulation
+	 */
+	public Grid getGrid(){
+		return grid;
+	}
+
+	/**
+	 * return parameter names
+	 * 
+	 * @return String[] of parameter names
+	 */
+	public abstract String[] getParamNames();
+
+	/**
+	 * set a parameters values
+	 * 
+	 * @param name
+	 *            name of parameter to set
+	 * @param toSet
+	 *            new parameter value
+	 */
+	public abstract void setParam(String name, Double toSet);
+
+	/**
+	 * iterate through grid and use simulations rule on each cell
+	 */
+	public void setNextStates(Grid grid) {
+		for (int r = 0; r < grid.getSize(); r++) {
+			for (int c = 0; c < grid.getSize(); c++) {
+
+				implementRule(grid.getCell(r, c));
+			}
+		}
+	}
+
+	/**
+	 * implement the simulations rule on each cell
+	 * 
+	 * @param cell
+	 *            cell to implement rule upon
+	 */
+	protected abstract void implementRule(Cell cell);
+
+	/**
+	 * returns all parameters for simulation
+	 * 
+	 * @return List of Doubles of all parameters
+	 */
+	public abstract List<Double> getParameters();
+
+}

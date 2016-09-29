@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename type &apos;StringLinkedList&apos; to &apos;StringLinkedOG&apos;&#x0A;- Original project: &apos;compsci201_Rec5&apos;&#x0A;- Original element: &apos;StringLinkedList&apos;&#x0A;- Renamed element: &apos;StringLinkedOG&apos;&#x0A;- Update references to refactored element&#x0A;- Update textual occurrences in comments and strings" description="Rename type &apos;StringLinkedList&apos;" flags="589830" id="org.eclipse.jdt.ui.rename.type" input="/src&lt;{StringLinkedList.java[StringLinkedList" matchStrategy="1" name="StringLinkedOG" qualified="false" references="true" similarDeclarations="false" stamp="1430352424398" textual="false" version="1.0"/>
+</session>

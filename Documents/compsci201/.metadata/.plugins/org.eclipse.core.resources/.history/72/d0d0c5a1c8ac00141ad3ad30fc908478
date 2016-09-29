@@ -1,0 +1,33 @@
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.*;
+
+
+public class HighTechIncubator {
+	public String[] shameList(String[] location1, String[] location2, String[] location3) {
+		ArrayList<String> results = new ArrayList<String>();
+		results.addAll(toListCompare(location1, location2));
+		results.addAll(toListCompare(location1, location3));
+		results.addAll(toListCompare(location2, location3));
+		String[] newResults = new String[results.size()];
+		newResults = results.toArray(newResults);
+		return newResults;
+	}
+	
+	private ArrayList<String> toListCompare(String[] list1, String[] list2) {
+		ArrayList<String> cheaters = new ArrayList<String>();
+		for(int i = 0; i < list1.length; i++){
+			for(int j = 0; j < list2.length; j++){
+				if(list1[i].equals(list2[j])){
+					cheaters.add(list1[i]);
+				}
+			}
+		}
+		return cheaters;
+	}
+}
+
+

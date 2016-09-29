@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename type &apos;FreeFall&apos; to &apos;Freefall&apos;&#x0A;- Original project: &apos;APT_1&apos;&#x0A;- Original element: &apos;FreeFall&apos;&#x0A;- Renamed element: &apos;Freefall&apos;&#x0A;- Update references to refactored element&#x0A;- Update textual occurrences in comments and strings" description="Rename type &apos;FreeFall&apos;" flags="589830" id="org.eclipse.jdt.ui.rename.type" input="/src&lt;{FreeFall.java[FreeFall" matchStrategy="1" name="Freefall" qualified="false" references="true" similarDeclarations="false" stamp="1423594984130" textual="false" version="1.0"/>
+</session>

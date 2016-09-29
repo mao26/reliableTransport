@@ -1,0 +1,19 @@
+import java.util.ArrayList;
+import java.util.Map;
+
+public class CleverHangman {
+	String convertToPattern(char[] template, String word, char guess){
+		//String secretWord = word.split();
+		String blank = "";
+		String s = "oboe"
+		//Map<String, ArrayList<String>> wordList = new HashMap<String, ArrayList<String>>();
+		//call the random words class from hangman game or hangman fileloader
+		for( int i = 0; i < template.length(); i++){
+			if(guess == word.charAt(i)){
+				template[i] = guess; 
+			}
+			s += template[i];
+			System.out.println(template.toString(s))
+		}
+	}
+}

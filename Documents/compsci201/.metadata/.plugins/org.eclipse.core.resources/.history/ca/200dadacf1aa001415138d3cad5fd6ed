@@ -1,0 +1,19 @@
+
+public class FileSystem {
+	public long findUsed(int[] fileBytes, int blockBytes) {
+		int count = 0;
+		for(int i = 0; i < fileBytes.length; i++){
+			long number = 0; 
+			number = number * blockBytes;
+			while(blockBytes < number){
+				long need = blockBytes * number;
+				number += 1;
+				return need; 
+			}
+			
+		}
+     }
+	public static void main(int [] args){
+		findUsed = new findUsed;
+	}
+}

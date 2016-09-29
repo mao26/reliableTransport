@@ -1,0 +1,42 @@
+package Tetris;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.Timer;
+
+import Tetris.Shape.Tetrominoes;
+
+public class Board extends JPanel implements ActionListener{
+
+    final int BoardWidth = 10;
+    final int BoardHeight = 22;
+
+    Timer timer;
+    boolean isFallingFinished = false;
+    boolean isStarted = false;
+    boolean isPaused = false;
+    int numLinesRemoved = 0;
+    int curX = 0;
+    int curY = 0;
+    JLabel statusbar;
+    Shape curPiece;
+    Tetrominoes[] board;
+    
+    public Board(Tetris parent){
+    	
+    }
+    
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		
+	}
+	
+}

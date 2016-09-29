@@ -1,0 +1,9 @@
+package Model;
+
+public class CommandsDataStruct {
+
+	public CommandsDataStruct() {
+		// TODO Auto-generated constructor stub
+	}
+
+}

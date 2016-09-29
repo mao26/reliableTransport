@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Copy 0 elements to &apos;cellsociety_team13&apos;&#x0A;- Destination element: &apos;cellsociety_team13&apos;" description="Copy compilation units" destination="=cellsociety_team13" files="0" flags="589830" folders="0" id="org.eclipse.jdt.ui.copy" policy="org.eclipse.jdt.ui.copyResources" stamp="1454018723824" units="0" version="1.0"/>
+</session>

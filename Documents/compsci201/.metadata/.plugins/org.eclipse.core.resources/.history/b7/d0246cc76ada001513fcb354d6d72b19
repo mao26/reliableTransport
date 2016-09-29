@@ -1,0 +1,42 @@
+package Model;
+
+/*
+ * This will be used as our structure for our turtles instructions
+ * It will hold all of the nodes that make up one set of commands
+ * each new set of commands will create an instance of this syntax tree
+ */
+
+public class CommandTree {
+
+	private CommandsDataStruct commandsClass;
+	private CommandNode root;
+
+	public CommandTree() {
+		commandsClass = new CommandsDataStruct();
+	}
+	
+	public String determineType(String command){
+		String noOfArgsNType = commandsClass.getInstance().grabPossibleCommands(command);
+		return noOfArgsNType.substring(0, noOfArgsNType.indexOf(":"));
+	}
+	
+	public int determineArgs(String command){
+		String noOfArgsNType = commandsClass.getInstance().grabPossibleCommands(command);
+		return Integer.parseInt(noOfArgsNType.substring(noOfArgsNType.indexOf(":"), noOfArgsNType.length()));
+	}
+
+	public void traverse() {
+
+	}
+
+	public void createTree(String[] commands) {
+		for (String eachCommand : commands) {
+			String type = determineType(eachCommand);
+			int args = determineArgs(eachCommand);
+			/* get rid of if statements */
+			if(type.equals("command")){
+				root = new TurtleCommand(args);
+			}
+		}
+	}
+}

@@ -1,0 +1,82 @@
+package Model;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Scanner;
+
+public class CommandsDataStruct {
+
+	private static final String DEFAULT_RESOURCE_PACKAGE = "resources/";
+	/*
+	 * ArrayList were each index corresponds to the curr state --> so idx == 0
+	 * holds all rules for curr state 0 each idx has a linked list that holds
+	 * all of the rules (so middle numbers) of what the neighbors may look like
+	 * the first element is the possible neighbors states and the
+	 * linkedlist.next() has the next state of our curr cell
+	 * 
+	 */
+	private ArrayList<Node> commandInfo;
+	private static CommandsDataStruct instance;
+
+	private class Node {
+		String name = "";
+		String subname = "";
+		String type = "";
+		int numArgs = -1;
+
+		public Node(String name, String sub, String type, int args) {
+			this.name = name;
+			this.subname = sub;
+			this.type = type;
+			this.numArgs = args;
+		}
+	}
+
+	public CommandsDataStruct() {
+		createDataStruct();
+		readInRulesFile();
+	}
+
+	public static synchronized CommandsDataStruct getInstance() {
+		if (instance == null)
+			instance = new CommandsDataStruct();
+		return instance;
+	}
+	
+	public List<Node> grabPossibleCommands(){
+		return commandInfo;
+	}
+
+	private void readInRulesFile() {
+		ClassLoader classLoader = getClass().getClassLoader();
+		File file = new File(classLoader.getResource(DEFAULT_RESOURCE_PACKAGE + "CommandInfo.txt").getFile());
+		try (Scanner scanner = new Scanner(file)) {
+
+			while (scanner.hasNextLine()) {
+				String line = scanner.nextLine();
+				createPossibleStates(line);
+			}
+			scanner.close();
+
+		} catch (IOException e) {
+			System.err.println(e);
+		}
+	}
+
+	private void createPossibleStates(String line) {
+		String[] diffSects = line.split(":");
+		// String[] diffSects = [name, subname, type, arguments];
+		// must get the int value of args for the constructor
+		Node newGuy = new Node(diffSects[0], diffSects[1], diffSects[2], Integer.parseInt(diffSects[4]));
+		commandInfo.add(newGuy);
+	}
+
+	private void createDataStruct() {
+		commandInfo = new ArrayList<Node>();
+	}
+
+}

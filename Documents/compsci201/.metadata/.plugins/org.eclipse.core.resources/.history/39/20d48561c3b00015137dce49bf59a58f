@@ -1,0 +1,45 @@
+package TetrisOwn;
+
+import java.awt.BorderLayout;
+import java.awt.EventQueue;
+import java.awt.Label;
+
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+
+public class Tetris extends JFrame {
+
+	private JLabel statusbar;
+
+	public Tetris() {
+		initUI();
+	}
+
+	private void initUI() {
+		statusbar = new JLabel(" Number of rows destroyed 0");
+		setTitle("Tetris 2.0");
+		setSize(200, 400);
+		add(statusbar, BorderLayout.SOUTH);
+		Board board = new Board();
+		// board.start();
+		setLocationRelativeTo(null);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	}
+	
+	public JLabel getStatusBar(){
+		return statusbar;
+	}
+
+	public static void main(String[] args){
+		EventQueue.invokeLater(new Runnable() {
+			
+			@Override
+			public void run() {
+				Tetris game = new Tetris();
+				game.setVisible(true);
+			}
+		});
+		
+	}
+
+}

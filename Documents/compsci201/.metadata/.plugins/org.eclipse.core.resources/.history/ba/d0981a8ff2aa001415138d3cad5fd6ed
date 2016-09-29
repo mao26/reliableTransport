@@ -1,0 +1,16 @@
+
+public class UnderCoverCoder {
+	public 
+	
+	public int totalNotes(String[] clips, String[] notes) {
+        // fill in code here
+		for(String s : clips){
+			String[] s2 = s.split(" ");
+		}
+		
+    }
+	public static void main(String [] args){
+		totalNotes test = new totalNotes();
+		String[] clips = {"Earthquake in San Francisco","Burglary at museum in Sweden", "Poverty"};
+	}
+}

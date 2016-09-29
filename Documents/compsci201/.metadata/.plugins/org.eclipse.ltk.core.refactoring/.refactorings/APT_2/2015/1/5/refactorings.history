@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Move element &apos;README.txt&apos; to &apos;PizzaToppings.java&apos;&#x0A;- Original project: &apos;APT_2&apos;&#x0A;- Destination element: &apos;PizzaToppings.java&apos;&#x0A;- Original element: &apos;README.txt&apos;&#x0A;- Update references to refactored element" description="Move file" destination="/src&lt;{PizzaToppings.java" element1="README.txt" files="1" flags="589830" folders="0" id="org.eclipse.jdt.ui.move" policy="org.eclipse.jdt.ui.moveResources" qualified="false" references="true" stamp="1422591523384" units="0" version="1.0"/>
+</session>

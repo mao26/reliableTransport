@@ -1,0 +1,11 @@
+import java.util.Arrays;
+
+
+public class HighTechIncubator {
+	public String[] shameList(String[] location1, String[] location2, String[] location3) {
+// TODO: fill in code here
+		List<String> location1List = Arrays.asList(location1);
+		List<String> location2List = Arrays.asList(location2);
+		List<String> location3List = Arrays.asList(location3);
+	}
+}

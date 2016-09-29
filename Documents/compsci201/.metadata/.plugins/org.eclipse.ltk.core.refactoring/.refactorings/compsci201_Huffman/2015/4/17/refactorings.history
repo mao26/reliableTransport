@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename type &apos;SimpleHuffProcessor&apos; to &apos;TreeHuffProcessor&apos;&#x0A;- Original project: &apos;compsci201_Huffman&apos;&#x0A;- Original element: &apos;SimpleHuffProcessor&apos;&#x0A;- Renamed element: &apos;TreeHuffProcessor&apos;&#x0A;- Update references to refactored element&#x0A;- Update textual occurrences in comments and strings" description="Rename type &apos;SimpleHuffProcessor&apos;" flags="589830" id="org.eclipse.jdt.ui.rename.type" input="/src&lt;{SimpleHuffProcessor.java[SimpleHuffProcessor" matchStrategy="1" name="TreeHuffProcessor" qualified="false" references="true" similarDeclarations="false" stamp="1429580729140" textual="false" version="1.0"/>
+</session>

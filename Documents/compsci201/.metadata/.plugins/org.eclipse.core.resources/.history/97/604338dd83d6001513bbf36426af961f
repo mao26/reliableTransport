@@ -1,0 +1,56 @@
+# slogo
+Duke CompSci 308 Cell Society Project
+
+
+###Introduction
+
+
+
+### Overview
+
+Possible Classes:
+
+What needs to be extendable is:
+
+### User Interface
+
+
+### Design Overview
+
+
+### User Interface
+
+
+### API Details
+External API 
+	
+	BackEnd 
+*Back end sees an exception with the command and sends the Exception back to the GUI
+	
+	Views/GUI
+	
+Internal API
+
+	BackEnd
+	
+	Views/GUI
+	
+How the two will communicate? 
+
+
+### API Example Code 
+
+
+### Design Considerations
+
+
+### Use Cases
+
+
+
+### Team Responsibilities 
+* Mario
+* Hunter
+* Aaron
+* Michelle
+* Adam

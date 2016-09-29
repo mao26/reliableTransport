@@ -1,0 +1,14 @@
+INDEX VERSION 1.127+/Users/mario_oliver93/Documents/compsci201/.metadata/.plugins/org.eclipse.jdt.core
+666726823.index
+2828506852.index
+3760188846.index
+2897704347.index
+3167637336.index
+3802966174.index
+4231063091.index
+3242450699.index
+3412489434.index
+1155763685.index
+3128154035.index
+3430379867.index
+3925951094.index

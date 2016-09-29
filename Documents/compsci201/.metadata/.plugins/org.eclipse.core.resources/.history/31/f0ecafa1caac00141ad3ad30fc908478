@@ -1,0 +1,8 @@
+import java.util.*;
+
+public class MatchingNgrams {
+	public int totalMatches(String[] ngrams) {
+		Map<Character, Character> results = new TreeMap<Character, Character>();
+		for(int i = 0;)
+	}
+}

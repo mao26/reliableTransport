@@ -1,0 +1,68 @@
+
+CompSci 308: Cell Society Analysis
+===================
+
+> This is the link to the Analysis Description: [Analysis - Game](https://github.com/duke-compsci308-spring2016/cellsociety_team13)
+
+Project Journal
+=======
+
+Design Review
+=======
+
+###Status
+
+I think overall there are several things that would have improved the design of my code, and several things that are a good starting point for my code. 
+The positives include:
+* Layout divides the project up into several different classes: 1. Graphics and ColorMap 2. Rules - and all the cases 3. XML Parser 4. GUI and Population Graph 5. Cell, Grid and InitGridConfig 6. Main and Simulation 7. Resources. I think we have good naming conventions that let the user know what each class and each method was used for. We even went as as to name variables very specifically in order to let users know what each variable was used for. One thing about our layout; we should have used different packages to split up the before-mentioned division in labor for our project.
+* A general consistent layout within classes. Usually a constructor call with an init method that initilizes most of the variables. 
+* No global static variables, unless they are constants, and the usual use of getters and setters to provide usuability of important variables between classes. In some classes, we also went as far as to not provide getters and setters for some variables and instead the class does an action on an object that is useful to other classes. For example when we call a Langston's Loop and all of the variables that this simulation will use gets initialized in LangstonsCellChange.
+* The classes and methods usually do what you expect, but we also went as far as to provide javadoc documentation for methods and classes so that it was even easier to determine what methods were used for.
+* One of the biggest dependencies that I find comes from our implementation of how a rule class implements its specific cases rule. The abstract rules class implements a nextState() method that within this method calls another abstract method implementRule(). It must happen in this order. However, by making it in an abstract class we both force the subclass to override the abstract method for its specific rule and we even allow the subclass to call it's own nextState() method that can override (through overloading of the superclass method/ naming the subclass also the same nextState()) and then this method gets called instead. The XML parser have the highest degree of dependency, as the XML parser can only be called in one direction (method calls must occur in a specific order when reading the document).
+* We made our class easy to extend by providing a hierarchy for the different rules/cases that must extend the abstract Rules class. We also made it easy to extend the type of grid that our case uses by creating a grid class, and we even made it easy for the Cell's class to be extended (as shown with WatorCell's class). The XML parser, GUI, and Simulation classes are probably the most difficult to extend. They are just very specific to what needs to happen at each point in our program, but we have made them as abstract as possible - the GUI by using the resource bundle, and the simulation classes by hiding in the background what simulation gets called (abstract superclass Rules gets passed around). 
+
+Two classes I would refactor: 
+
+1) XMLParser. The biggest issue is our if statement that creates our Rules instance depending on the case that we picked from our XML chooser. The conditional logic then chooses what class should be created and passed as our Rules class. We hid the specific implementation of which rule gets created, but we still initialize the rule depending on the specific type of xml file that gets read. I don't know how to make it so that we even abstract the initializing of the Rules class so that it doesn't matter what case gets called. It is very reusable code, and the way we implement the Rules hierarchy makes it very simple to add a new Case/rules, but I wish we could abstract the creation of our specific case rules. 
+
+2) PopulationGraph and Graphic. I put both of these classes with a more abstract code question in general. I created a Singleton type Class for PaintMap, but when we pass around a map object we don't use the PaintMap.getInstance().methodCall(). This is what interests me. I thought PaintMap was supposed to make it so that one instance of our class is only ever used and then our getInstance() call can arbitrarily return this call. At one point I initialze the PaintMap class and create a reference to that paintMap as cMap = map.getInstance(), but is this the proper way to handle the Singleton case? 
+
+
+###Design
+
+Reflect on how the entire program is currently organized: We divided the way our software interacted into three main components, backend, graphics, and rules for how the simulation changed with each implementation. We also added a main class that did most of the initiliazing work for the GUI, an XML parser,  and a Simulation class that handled most of the work of how the objects interacted together and how to create new Simulations with different rules. However, these were all thrown into one package. We should have divided these into four packages; the backend (Cells, InitialGridConfig and Grid), the TestCases (all the tests, rules) the GUI_Graphics (populationGraph, Graphics, GUI), and Runnables(Main, Simulation, XMLReader)
+
+Describe the overall design of the complete program: our Main class initializes all of the Runnable classes that we will need to create and run our simulation. This includes creating our GUI - includes the Population Graph class - and simulation classes, and creating our XMLParser object. The xml reader then gets chosen and our xml parser extracts all of the relevant data and intializes our grid and cell objects contained in the grid. Then a rules class that is equal to the type specified is passed to our simulation which then begins to run our simulation depending on the implementRule determined by the specific rules class created in XMLParser. The backend's data in the grid gets set up - essentially each cell in the grid has a current state and a next state and once the implement rule for the current step iteration in the simulation is ran the curr state gets changed to the determined next state set by the current rules implement cell. The graphics class then grabs our grid from the backend and draws the desired states on the GUI. This gets repeated as long as step or play is called. 
+
+To add a new simulation to the program we first need to create a new XML config file, we then need to go to our xml parser and add code that allows the XML parser to understand that we have a new simulation case that we want to be able to implement. Then finally we need to create a case rules that extends our rules class and implement the needed methods - the most important being implementRule that gives the guidelines of what happens when the setnextstates for each cell gets called (how the next state is determined). Everything else gets handled by our simulation class that determines how to iterate through all of the cells and how our next state will look both in the backend and in the graphics. 
+
+Our code is designed with the idea that we would have to extend the rules to include many different simulation types; to hide the backend from the front end; and to let each specific software piece to depend as little as possible on other parts of the simulation - letting the backend sit by itself without needing to interact with the rules or the graphics. We minimized how much each piece interacted with each other, but we still created dependencies between each part. The XMLparser creates our grid depending on what case's rules are needed, but then a grid reference is passed around indirectly through a getter. This still creates a dependency throughout our program because many pieces needs to see what our backend looks like. However, we minimize this by not needing any part of the program to know specifically how the backend is organized or how each new state is determined in the back end. This is minimized by the use of the abstract rules class that needs the implementRules method to be always implemented, but then doesn't need the client to know what happens with this new rule or how to then change our backend based on that rule. 
+
+Describe two features from the assignment specification (at least one you did not implement) in detail:
+What classes or resources are required to implement this feature?
+1. LangstonsLoopCase
+2. Population Graph
+
+Describe the design of this feature in detail (what parts are closed? what implementation details are encapsulated? what assumptions are made? do they limit its flexibility?)
+1. LangstonsLoopCase
+2. Population Graph
+
+How extensible is the design for this feature (is it clear how to extend the code as designed? what kind of change might be hard given this design?)
+1. LangstonsLoopCase
+2. Population Graph
+
+
+###Alternate Designs
+
+Describe how well (or poorly) the original design handled the project's extensions to the original specifications:
+Our code was designed well enough to easily implement the projects extensions. The fact we made an abstract Rules class made it easy for our new cases to be easily added by letting the rest of the software - simulation, grid, graphics - not need to know what new cases were coming or how those cases would now interact with the rest of the software. This could also be seen with our backend with how Cell class was extended to add new functionality and flags to each new cases' specific cells (Slime and WatorWorld Cells needed new flags and methods not in Cell and this was easy to add). The grid was also easy to change - add what shape was included inside our grid pane, and how that grid interacted with it's neighbors.
+
+Describe the two best and worst features of the overall project's current design (these could include your own or others code).
+
+Reflect on alternate designs for the project based on your analysis of the current design or project discussions.
+
+Describe two design decisions discussed, either as a team of with a UTA, in detail 
+We decided to use inheritance to our advantage in this simulation software in order to greatly reduce my code duplication and to increase my code encapsulation. We used setters and getters, sub and super classes for most objects in the simulation, and even used a singleton class. We also focused on dividing the way our software interacted into three main components, backend, graphics, and rules for how the simulation changed with each implementation. We also added a main class that did most of the initiliazing work for the GUI, an XML parser,  and a Simulation class that handled most of the work of how the objects interacted together and how to create new Simulations with different rules. We could have instead of using an abstract super class we could have used a non abstract superclass for our Rules hierarchy. We didn't particularly offer any alternate designs however. 
+
+To be a better designer, what should you start doing, keep doing, or stop doing?
+I need to do more reading. I think that everytime I read something new I try to implement it in my code, but my problem is that I stop there. Once I implement my new idea, such as using the Singleton method, I did not read more on this type of Software design and could have build upon how the idea was implemented. I think this comes down to being afraid to delete code and refactor. I definitely improved this go-round, as I first typed a case and hard coded it to how the back end handled this case and then deleted much of my hardcoding and created our abstraction for the rules hierarchy. This refactoring helped tremendously as it allowed my partners to easily implement new simulation cases. I need to refactor more!

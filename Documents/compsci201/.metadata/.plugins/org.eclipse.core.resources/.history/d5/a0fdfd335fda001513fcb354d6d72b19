@@ -1,0 +1,15 @@
+package Model;
+
+public class TurtleCommand implements CommandNode{
+
+	public TurtleCommand() {
+		// TODO Auto-generated constructor stub
+	}
+
+	@Override
+	public void evaluate(String myCommand) {
+		// TODO Auto-generated method stub
+		
+	}
+
+}

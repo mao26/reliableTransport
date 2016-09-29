@@ -1,0 +1,73 @@
+//package SecondSemester;
+
+import java.util.Arrays;
+import java.util.Scanner;
+
+public class LoadBalancing {
+
+	public static void main(String[] args) {
+		LoadBalancing lb = new LoadBalancing();
+		lb.run();
+	}
+
+	private void run() {
+		Scanner scan = new Scanner(System.in);
+		int n = scan.nextInt();
+		int[] servers = new int[n];
+		for (int i = 0; i < n; i++) {
+			servers[i] = scan.nextInt();
+		}
+		int end = n - 1;
+		int totalMoves = 0;
+		iterate(servers, end, n, totalMoves);
+	}
+
+	private void iterate(int[] servers, int endIdx, int length, int totalMoves) {
+		Arrays.sort(servers);
+		int thisIterationsMoves = 0;
+		for (int i = 0; i < length; i++) {
+			if(i > endIdx) break;
+			if (i == endIdx){
+				isMiddleServerUpdated(servers, thisIterationsMoves, i);
+				break;
+			}
+			int diff = Math.abs(servers[i] - servers[endIdx]);
+			if (diff <= 1) {
+				return;
+			} else {
+				totalMoves += updateTwoServers(i, endIdx, servers, thisIterationsMoves, diff);
+				endIdx--;
+			}
+		}
+		if (thisIterationsMoves > 0) {
+			// means we had to make a change in our sort
+			// so call our function again 
+			totalMoves += thisIterationsMoves;
+			iterate(servers, endIdx, length, totalMoves);
+		} else {
+			System.out.println(totalMoves);
+		}
+	}
+
+	private int updateTwoServers(int i, int endIdx, int[] servers, int thisIterationsMoves, int diff) {
+		int middleVal = (servers[i] + servers[endIdx]) / 2;
+		thisIterationsMoves += (Math.abs(servers[endIdx] - middleVal));
+		if (diff % 2 == 0) {
+			servers[i] = middleVal;
+			servers[endIdx] = middleVal;
+		} else {
+			thisIterationsMoves--;
+			servers[i] = middleVal;
+			servers[endIdx] = middleVal;
+		}
+		return thisIterationsMoves;
+	}
+
+	private void isMiddleServerUpdated(int[] servers, int thisIterationsMoves, int i) {
+		if(servers[0] != servers[i]){
+			thisIterationsMoves += Math.abs(servers[i] - servers[0]); 
+			servers[i] = servers[0];
+		}
+	}
+
+}

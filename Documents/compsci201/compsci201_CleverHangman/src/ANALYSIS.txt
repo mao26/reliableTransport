@@ -1,0 +1,24 @@
+	FrequencyGuesser when executed in Frequency Executor produces the following data: 
+word length: 8
+7070 words 6605 wins
+letters: 8 / words possible: 7070 / percentage: 93.42291371994342
+
+word length: 9
+6078 words 5906 wins
+letters: 9 / words possible: 6078 / percentage: 97.17012175057584
+
+word length: 10
+4591 words 4547 wins
+letters: 10 / words possible: 4591 / percentage: 99.04160313657155
+
+word length: 11
+3069 words 3060 wins
+letters: 11 / words possible: 3069 / percentage: 99.70674486803519
+
+word length: 12
+1880 words 1879 wins
+letters: 12 / words possible: 1880 / percentage: 99.94680851063829
+
+This is a dramatic increase in the percentages of correct complete guesses of the word, before the executor loses by 
+guessing too many letters.  My program runs very slowly, so this data takes over a minute to completely execute and 
+produce the following table in Frequency Executor. 

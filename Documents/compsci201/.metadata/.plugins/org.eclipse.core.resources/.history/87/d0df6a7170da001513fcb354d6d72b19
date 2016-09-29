@@ -1,0 +1,33 @@
+package Model;
+
+public class Node implements CommandNode {
+
+	String commandType;
+	String commandName;
+	int noOfChildren;
+	Node[] nextCommands;
+
+	public Node(String type, String name, int args) {
+		this.commandType = type;
+		this.commandName = name;
+		this.noOfChildren = args;
+		this.nextCommands = new Node[noOfChildren];
+	}
+	
+	public Node[] grabNextCommands(){
+		return nextCommands;
+	}
+
+	@Override
+	public void evaluate(String myCommand) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void intermediateCanvasUpdate() {
+		// TODO Auto-generated method stub
+
+	}
+
+}

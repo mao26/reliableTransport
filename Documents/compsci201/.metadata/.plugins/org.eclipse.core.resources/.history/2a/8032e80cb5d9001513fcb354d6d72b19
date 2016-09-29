@@ -1,0 +1,68 @@
+package Model;
+
+public class Turtle implements Character {
+
+	private TurtleState myState;
+	private String myName;
+	private boolean penDown;
+	private double xCoor;
+	private double yCoor;
+	private double direction;
+	private boolean isHidden;
+	
+
+	public Turtle(String myName, double xCoor, double yCoor, boolean penDown, double direction, boolean isHidden) {
+		this.myState = new TurtleState(xCoor, yCoor, penDown, direction, isHidden);
+		this.myName = myName;
+		this.penDown = penDown;
+		this.xCoor = xCoor;
+		this.yCoor = yCoor;
+		this.direction = direction;
+		this.isHidden = isHidden;
+	}
+
+	public Character step(CharacterState myState) {
+		return this;
+	}
+
+	public CharacterState getState() {
+		return myState;
+	}
+
+	public void move() {
+
+	}
+
+	public void rotate() {
+
+	}
+
+	public void penDown() {
+		this.penDown = true;
+	}
+
+	public void penUp() {
+		this.penDown = false;
+	}
+	
+	public boolean isItHidden(){
+		return isItHidden();
+	}
+	
+	public void setHidden(boolean hide){
+		this.isHidden = hide;
+	}
+
+	public void setTurtleImage() {
+		
+	}
+
+	public void setPenColor() {
+		
+	}
+
+	public String getName() {
+		return myName;
+	}
+
+}

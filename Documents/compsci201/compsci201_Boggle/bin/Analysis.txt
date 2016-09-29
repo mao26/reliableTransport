@@ -1,0 +1,426 @@
+Lexicon Benchmarking	
+
+To be able to properly analyze Lexicon Benchmark we have to understand what happens when the code runs SimpleLexicon, BinarySearchLexicon, 
+and TrieLexicon. SimpleLexicon implements wordStatus where it simply does a linear search over the list of words it stores. 
+SimpleLexicon runs in O(n) time where n is the number of words in the list (lexicon). 
+BinarySearchLexicon introduces a Binary Search algorithm, where Binary search relies on a divide and conquer strategy to find a value 
+within an already-sorted collection. Every iteration eliminates half of the remaining possibilities. This makes binary searches very 
+efficient - even for large collections. When searching for a word the BinarySearchLexicon should run in log(w), where w is the number of words 
+in the list/lexicon. TrieLexicon implements a trie where a node that represents a character links to another node (character). By following this pattern
+a word is represented by a list of tries, and words that start with similar characters are added after the prefix of the word 
+and connects by the rest of the word being nodes that run from the prefix and are a link of nodes that represent the rest of the characters.
+This trie supports queries (add, contains, delete) in O(w) time for words of length w. Analyzing the information we got from Lexicon Benchmark shoes 
+what I expected. For our program to iterate through the items, BinarySearchLexicon produces the fastest run time as it has a run time of log(w). 
+To find the words and prefixes, the program produces the fastest run time using the TrieLexicon, because it is able to quickly determine and follow the
+path for the word that it is looking for by following the link of nodes. 
+
+size of SimpleLexicon: 80612
+	iter time: 0.010000	size: 80612
+	word time: 0.008000	words: 80612
+	pref time: 0.019000	size: 16466
+
+size of BinarySearchLexicon: 80612
+	iter time: 0.003000	size: 80612
+	word time: 0.001000	words: 80612
+	pref time: 0.014000	size: 16466
+
+size of TrieLexicon: 80612
+	iter time: 0.050000	size: 80612
+	word time: 0.001000	words: 80612
+	pref time: 0.014000	size: 16466
+
+	
+	
+Analyzing Bogglestats
+Best Board for 4x4 with 10 trials	
+  e  s  a  h
+  l  e  f  o
+  t  n  e  y
+  c  r  u qu
+
+LexiconFirstAutoPlayer SimpleLexicon	 count: 10	max: 205	time: 0.447000
+  e  s  a  h
+  l  e  f  o
+  t  n  e  y
+  c  r  u qu
+
+BoardFirstAutoPlayer SimpleLexicon	 count: 10	max: 205	time: 0.037000
+  e  s  a  h
+  l  e  f  o
+  t  n  e  y
+  c  r  u qu
+
+LexiconFirstAutoPlayer TrieLexicon	 count: 10	max: 205	time: 0.589000
+  e  s  a  h
+  l  e  f  o
+  t  n  e  y
+  c  r  u qu
+
+BoardFirstAutoPlayer TrieLexicon	 count: 10	max: 205	time: 0.032000
+  e  s  a  h
+  l  e  f  o
+  t  n  e  y
+  c  r  u qu
+
+LexiconFirstAutoPlayer BinarySearchLexicon	 count: 10	max: 205	time: 0.404000
+  e  s  a  h
+  l  e  f  o
+  t  n  e  y
+  c  r  u qu
+
+BoardFirstAutoPlayer BinarySearchLexicon	 count: 10	max: 205	time: 0.022000
+
+
+Best board for 4x4 with 100 trials
+  c  i  t  y
+  e  r  t qu
+  e  e  a  w
+  d  r  f  o
+
+LexiconFirstAutoPlayer SimpleLexicon	 count: 100	max: 423	time: 3.591000
+  c  i  t  y
+  e  r  t qu
+  e  e  a  w
+  d  r  f  o
+
+BoardFirstAutoPlayer SimpleLexicon	 count: 100	max: 423	time: 0.218000
+  c  i  t  y
+  e  r  t qu
+  e  e  a  w
+  d  r  f  o
+
+LexiconFirstAutoPlayer TrieLexicon	 count: 100	max: 423	time: 4.034000
+  c  i  t  y
+  e  r  t qu
+  e  e  a  w
+  d  r  f  o
+
+BoardFirstAutoPlayer TrieLexicon	 count: 100	max: 423	time: 0.224000
+  c  i  t  y
+  e  r  t qu
+  e  e  a  w
+  d  r  f  o
+
+LexiconFirstAutoPlayer BinarySearchLexicon	 count: 100	max: 423	time: 3.014000
+  c  i  t  y
+  e  r  t qu
+  e  e  a  w
+  d  r  f  o
+
+BoardFirstAutoPlayer BinarySearchLexicon	 count: 100	max: 423	time: 0.145000
+
+Best board 4x4 with 1000 trials
+  g  s  r  g
+  n  e  t  i
+  i  o  s  b
+  p  r  e  n
+
+LexiconFirstAutoPlayer SimpleLexicon	 count: 1000	max: 889	time: 32.272000
+  g  s  r  g
+  n  e  t  i
+  i  o  s  b
+  p  r  e  n
+
+BoardFirstAutoPlayer SimpleLexicon	 count: 1000	max: 889	time: 2.301000
+170	85	98
+231	262	271
+489	184	186
+696	125	129
+697	55	59
+758	189	197
+827	179	184
+865	84	90
+  g  s  r  g
+  n  e  t  i
+  i  o  s  b
+  p  r  e  n
+
+LexiconFirstAutoPlayer TrieLexicon	 count: 1000	max: 889	time: 39.279000
+  g  s  r  g
+  n  e  t  i
+  i  o  s  b
+  p  r  e  n
+
+BoardFirstAutoPlayer TrieLexicon	 count: 1000	max: 889	time: 1.078000
+170	85	98
+231	262	271
+489	184	186
+696	125	129
+697	55	59
+758	189	197
+827	179	184
+865	84	90
+  g  s  r  g
+  n  e  t  i
+  i  o  s  b
+  p  r  e  n
+
+LexiconFirstAutoPlayer BinarySearchLexicon	 count: 1000	max: 889	time: 29.436000
+  g  s  r  g
+  n  e  t  i
+  i  o  s  b
+  p  r  e  n
+
+BoardFirstAutoPlayer BinarySearchLexicon	 count: 1000	max: 889	time: 1.205000
+170	85	98
+231	262	271
+489	184	186
+696	125	129
+697	55	59
+758	189	197
+827	179	184
+865	84	90
+
+
+To run 10,000 games on our BoggleBoard 4x4 I predict following the trend from 10 to 100 to 1000 games that it would take:
+LexiconFirstAutoPlayer for SimpleLexicon:  Time: 350.000
+BoardFirstAutoPlayer for SimpleLexicon: Time: 20.000
+LexiconFirstAutoPlayer for TrieLexicon:  Time: 400.000
+BoardFirstAutoPlayer for TrieLexicon: Time: 20.000
+LexiconFirstAutoPlayer for BinarySearchLexicon:  Time: 300.0000
+BoardFirstAutoPlayer for BinarySearchLexicon: Time: 15.000
+
+To run 100,000 games on our BoggleBoard 4x4 I predict following the trend from 10 to 100 to 1000 games that it would take:
+LexiconFirstAutoPlayer for SimpleLexicon:  Time: 3500.00
+BoardFirstAutoPlayer for SimpleLexicon: Time: 200.00
+LexiconFirstAutoPlayer for TrieLexicon:  Time: 4000.00
+BoardFirstAutoPlayer for TrieLexicon: Time: 200.000
+LexiconFirstAutoPlayer for BinarySearchLexicon:  Time: 3000.00
+BoardFirstAutoPlayer for BinarySearchLexicon: Time: 150.000
+
+To run 1,000,000 games on our BoggleBoard 4x4 I predict following the trend from 10 to 100 to 1000 games that it would take:
+LexiconFirstAutoPlayer for SimpleLexicon:  Time: 35000.000
+BoardFirstAutoPlayer for SimpleLexicon: Time: 2000.00
+LexiconFirstAutoPlayer for TrieLexicon:  Time: 40000.000
+BoardFirstAutoPlayer for TrieLexicon: Time: 2000.000
+LexiconFirstAutoPlayer for BinarySearchLexicon:  Time:30000.000
+BoardFirstAutoPlayer for BinarySearchLexicon: Time: 1500.000
+
+
+
+My program is able to run 10,000 games, but it takes about 3 hours to do so; however, I closed my console and lost all of the data, and did not add it
+to my assignment. So instead I made a prediction that stays in line with the trend. 
+
+
+
+Best board 5x5 with 10
+
+  l  n  c  a  t
+  o  a  l  e  d
+  n  p  w  s  e
+  e  e  y  k  i
+  n  d  p  o  r
+
+LexiconFirstAutoPlayer SimpleLexicon	 count: 10	max: 753	time: 0.675000
+  l  n  c  a  t
+  o  a  l  e  d
+  n  p  w  s  e
+  e  e  y  k  i
+  n  d  p  o  r
+
+BoardFirstAutoPlayer SimpleLexicon	 count: 10	max: 753	time: 0.062000
+  l  n  c  a  t
+  o  a  l  e  d
+  n  p  w  s  e
+  e  e  y  k  i
+  n  d  p  o  r
+
+LexiconFirstAutoPlayer TrieLexicon	 count: 10	max: 753	time: 0.735000
+  l  n  c  a  t
+  o  a  l  e  d
+  n  p  w  s  e
+  e  e  y  k  i
+  n  d  p  o  r
+
+BoardFirstAutoPlayer TrieLexicon	 count: 10	max: 753	time: 0.073000
+  l  n  c  a  t
+  o  a  l  e  d
+  n  p  w  s  e
+  e  e  y  k  i
+  n  d  p  o  r
+
+LexiconFirstAutoPlayer BinarySearchLexicon	 count: 10	max: 753	time: 0.585000
+  l  n  c  a  t
+  o  a  l  e  d
+  n  p  w  s  e
+  e  e  y  k  i
+  n  d  p  o  r
+
+BoardFirstAutoPlayer BinarySearchLexicon	 count: 10	max: 753	time: 0.043000
+
+
+
+
+Best board 5x5 with 100
+
+  o  t  r  p  w
+  d  b  n  o  l
+  r  e  s  e  s
+  s  t  n  i  m
+  w  n  i  s  h
+
+LexiconFirstAutoPlayer SimpleLexicon	 count: 100	max: 1301	time: 5.114000
+  o  t  r  p  w
+  d  b  n  o  l
+  r  e  s  e  s
+  s  t  n  i  m
+  w  n  i  s  h
+
+BoardFirstAutoPlayer SimpleLexicon	 count: 100	max: 1301	time: 0.532000
+22	355	365
+53	639	647
+57	218	227
+  o  t  r  p  w
+  d  b  n  o  l
+  r  e  s  e  s
+  s  t  n  i  m
+  w  n  i  s  h
+
+LexiconFirstAutoPlayer TrieLexicon	 count: 100	max: 1301	time: 5.518000
+  o  t  r  p  w
+  d  b  n  o  l
+  r  e  s  e  s
+  s  t  n  i  m
+  w  n  i  s  h
+
+BoardFirstAutoPlayer TrieLexicon	 count: 100	max: 1301	time: 0.438000
+22	355	365
+53	639	647
+57	218	227
+  o  t  r  p  w
+  d  b  n  o  l
+  r  e  s  e  s
+  s  t  n  i  m
+  w  n  i  s  h
+
+LexiconFirstAutoPlayer BinarySearchLexicon	 count: 100	max: 1301	time: 4.532000
+  o  t  r  p  w
+  d  b  n  o  l
+  r  e  s  e  s
+  s  t  n  i  m
+  w  n  i  s  h
+
+BoardFirstAutoPlayer BinarySearchLexicon	 count: 100	max: 1301	time: 0.358000
+22	355	365
+53	639	647
+57	218	227
+
+
+Best board 5x5 with 1000 trials
+
+  o  t  r  p  w
+  d  b  n  o  l
+  r  e  s  e  s
+  s  t  n  i  m
+  w  n  i  s  h
+
+LexiconFirstAutoPlayer SimpleLexicon	 count: 1000	max: 1301	time: 47.170000
+  o  t  r  p  w
+  d  b  n  o  l
+  r  e  s  e  s
+  s  t  n  i  m
+  w  n  i  s  h
+
+BoardFirstAutoPlayer SimpleLexicon	 count: 1000	max: 1301	time: 6.319000
+22	355	365
+53	639	647
+57	218	227
+231	149	156
+298	182	188
+326	418	435
+336	109	122
+365	291	297
+475	325	326
+483	329	361
+558	589	630
+685	722	724
+748	125	136
+909	153	168
+930	249	271
+942	143	161
+  o  t  r  p  w
+  d  b  n  o  l
+  r  e  s  e  s
+  s  t  n  i  m
+  w  n  i  s  h
+
+LexiconFirstAutoPlayer TrieLexicon	 count: 1000	max: 1301	time: 54.105000
+  o  t  r  p  w
+  d  b  n  o  l
+  r  e  s  e  s
+  s  t  n  i  m
+  w  n  i  s  h
+
+BoardFirstAutoPlayer TrieLexicon	 count: 1000	max: 1301	time: 3.171000
+22	355	365
+53	639	647
+57	218	227
+231	149	156
+298	182	188
+326	418	435
+336	109	122
+365	291	297
+475	325	326
+483	329	361
+558	589	630
+685	722	724
+748	125	136
+909	153	168
+930	249	271
+942	143	161
+  o  t  r  p  w
+  d  b  n  o  l
+  r  e  s  e  s
+  s  t  n  i  m
+  w  n  i  s  h
+
+LexiconFirstAutoPlayer BinarySearchLexicon	 count: 1000	max: 1301	time: 44.844000
+  o  t  r  p  w
+  d  b  n  o  l
+  r  e  s  e  s
+  s  t  n  i  m
+  w  n  i  s  h
+
+BoardFirstAutoPlayer BinarySearchLexicon	 count: 1000	max: 1301	time: 3.398000
+22	355	365
+53	639	647
+57	218	227
+231	149	156
+298	182	188
+326	418	435
+336	109	122
+365	291	297
+475	325	326
+483	329	361
+558	589	630
+685	722	724
+748	125	136
+909	153	168
+930	249	271
+942	143	161
+
+
+
+To run 10,000 games on our BoggleBoard 5x5 I predict following the trend from 10 to 100 to 1000 games that it would take:
+LexiconFirstAutoPlayer for SimpleLexicon:  Time: 500.000
+BoardFirstAutoPlayer for SimpleLexicon: Time: 50.0000
+LexiconFirstAutoPlayer for TrieLexicon:  Time: 550.000
+BoardFirstAutoPlayer for TrieLexicon: Time: 30.00000
+LexiconFirstAutoPlayer for BinarySearchLexicon:  Time: 450.00000
+BoardFirstAutoPlayer for BinarySearchLexicon: Time: 35.0000
+
+To run 100,000 games on our BoggleBoard 5x5 I predict following the trend from 10 to 100 to 1000 games that it would take:
+LexiconFirstAutoPlayer for SimpleLexicon:  Time: 5000.000
+BoardFirstAutoPlayer for SimpleLexicon: Time: 500.000
+LexiconFirstAutoPlayer for TrieLexicon:  Time:5500.000
+BoardFirstAutoPlayer for TrieLexicon: Time: 300.00
+LexiconFirstAutoPlayer for BinarySearchLexicon:  Time:4500.000
+BoardFirstAutoPlayer for BinarySearchLexicon: Time: 350.0000
+
+To run 1,000,000 games on our BoggleBoard 5x5 I predict following the trend from 10 to 100 to 1000 games that it would take:
+LexiconFirstAutoPlayer for SimpleLexicon:  Time:50000.000
+BoardFirstAutoPlayer for SimpleLexicon: Time: 5000.000
+LexiconFirstAutoPlayer for TrieLexicon:  Time:55000.000
+BoardFirstAutoPlayer for TrieLexicon: Time: 3000.000
+LexiconFirstAutoPlayer for BinarySearchLexicon:  Time:45000.00
+BoardFirstAutoPlayer for BinarySearchLexicon: Time: 3500.0000

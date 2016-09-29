@@ -1,0 +1,15 @@
+package Model;
+
+public class MathCommand implements CommandNode{
+
+	public MathCommand() {
+		// TODO Auto-generated constructor stub
+	}
+
+	@Override
+	public void evaluate(String myCommand) {
+		// TODO Auto-generated method stub
+		
+	}
+
+}

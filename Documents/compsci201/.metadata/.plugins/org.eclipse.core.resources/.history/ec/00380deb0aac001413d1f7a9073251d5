@@ -1,0 +1,17 @@
+
+public class FileSystem {
+	public long findUsed(int[] fileBytes, int blockBytes) {
+		long count = 0;
+		for(int i = 0; i < fileBytes.length; i++){
+			for(int j = 0; j < (fileBytes[j]/blockBytes); j++){  //do I even need this for loop
+				if(fileBytes[j] == 0){    // if fileBytes element = 0
+					return count = count + 0;
+				}
+				count = count * (fileBytes[j]/blockBytes); //else return count * elements dividied
+			//need to get this number rounded up
+			}
+			
+		}
+     }
+	
+}

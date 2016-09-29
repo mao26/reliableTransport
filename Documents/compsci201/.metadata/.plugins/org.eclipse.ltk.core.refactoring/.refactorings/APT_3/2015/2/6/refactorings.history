@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename type &apos;MatchingNgrams&apos; to &apos;MatchingNGrams&apos;&#x0A;- Original project: &apos;APT_3&apos;&#x0A;- Original element: &apos;MatchingNgrams&apos;&#x0A;- Renamed element: &apos;MatchingNGrams&apos;&#x0A;- Update references to refactored element&#x0A;- Update textual occurrences in comments and strings" description="Rename type &apos;MatchingNgrams&apos;" flags="589830" id="org.eclipse.jdt.ui.rename.type" input="/src&lt;{MatchingNgrams.java[MatchingNgrams" matchStrategy="1" name="MatchingNGrams" qualified="false" references="true" similarDeclarations="false" stamp="1423095318578" textual="false" version="1.0"/>
+</session>

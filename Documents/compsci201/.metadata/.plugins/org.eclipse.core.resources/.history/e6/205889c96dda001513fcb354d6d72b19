@@ -1,0 +1,59 @@
+package Model;
+
+/*
+ * This will be used as our structure for our turtles instructions
+ * It will hold all of the nodes that make up one set of commands
+ * each new set of commands will create an instance of this syntax tree
+ */
+
+public class CommandTree {
+
+	private CommandsDataStruct commandsClass;
+	private CommandNode root;
+	private static final String NODETYPE = "root";
+	private String[] currCommands;
+
+	public CommandTree() {
+		commandsClass = new CommandsDataStruct();
+		//creates a root node that should no by using noOfCommands how many set of commands it needs to execute
+		root = new Node(NODETYPE, NODETYPE, noOfCommands());
+	}
+	
+	public String determineType(String command){
+		String noOfArgsNType = commandsClass.getInstance().grabPossibleCommands(command);
+		return noOfArgsNType.substring(0, noOfArgsNType.indexOf(":"));
+	}
+	
+	public int determineArgs(String command){
+		String noOfArgsNType = commandsClass.getInstance().grabPossibleCommands(command);
+		return Integer.parseInt(noOfArgsNType.substring(noOfArgsNType.indexOf(":"), noOfArgsNType.length()));
+	}
+
+	public void traverse() {
+
+	}
+
+	public void createTree(String[] commands) {
+		currCommands = commands;
+		for (String eachCommand : commands) {
+			String type = determineType(eachCommand);
+			int args = determineArgs(eachCommand);
+			/* get rid of if statements */
+			if(type.equals("command")){
+				root = new TurtleCommand(args, eachCommand);
+			}
+		}
+	}
+	
+	private int noOfCommands() {
+		int count = 0;
+		for(String eachCommand : currCommands) {
+			if(!isNumeric(eachCommand)) count++;
+		}
+		return count;
+	}
+	
+	private boolean isNumeric(String s) {  
+	    return s.matches("[-+]?\\d*\\.?\\d+");  
+	}  
+}

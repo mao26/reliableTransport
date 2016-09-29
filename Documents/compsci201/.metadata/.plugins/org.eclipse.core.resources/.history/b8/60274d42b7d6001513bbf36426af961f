@@ -1,0 +1,67 @@
+
+CompSci 308: Cell Society Analysis
+===================
+
+> This is the link to the Analysis Description: [Analysis - Game](http://www.cs.duke.edu/courses/compsci308/spring16/assign/01_game/part3.php)
+
+Project Journal
+=======
+
+Design Review
+=======
+
+Status
+Review two classes in the program you did not write or refactor in detail:
+What is interesting about this code (why did you choose it? is it especially good or bad?)
+What suggestions would you give the code's author about the code (i.e., improving it or making it easier to understand or extend)? Or what you learned about design by reading the code?
+What would be required to make the code reusable in a completely different project (like your Game)?
+
+###Status
+
+I think overall there are several things that would have improved the design of my code, and several things that are a good starting point for my code. 
+The positives include:
+* Layout divides the project up into several different classes: 1. Graphics and ColorMap 2. Rules - and all the cases 3. XML Parser 4. GUI and Population Graph 5. Cell, Grid and InitGridConfig 6. Main and Simulation 7. Resources. I think we have good naming conventions that let the user know what each class and each method was used for. We even went as as to name variables very specifically in order to let users know what each variable was used for. One thing about our layout; we should have used different packages to split up the before-mentioned division in labor for our project.
+* A general consistent layout within classes. Usually a constructor call with an init method that initilizes most of the variables. 
+* No global static variables, unless they are constants, and the usual use of getters and setters to provide usuability of important variables between classes. In some classes, we also went as far as to not provide getters and setters for some variables and instead the class does an action on an object that is useful to other classes. For example when we call a Langston's Loop and all of the variables that this simulation will use gets initialized in LangstonsCellChange.
+* The classes and methods usually do what you expect, but we also went as far as to provide javadoc documentation for methods and classes so that it was even easier to determine what methods were used for.
+* One of the biggest dependencies that I find comes from our implementation of how a rule class implements its specific cases rule. The abstract rules class implements a nextState() method that within this method calls another abstract method implementRule(). It must happen in this order. However, by making it in an abstract class we both force the subclass to override the abstract method for its specific rule and we even allow the subclass to call it's own nextState() method that can override (through overloading of the superclass method/ naming the subclass also the same nextState()) and then this method gets called instead. The XML parser have the highest degree of dependency, as the XML parser can only be called in one direction (method calls must occur in a specific order when reading the document).
+* We made our class easy to extend by providing a hierarchy for the different rules/cases that must extend the abstract Rules class. We also made it easy to extend the type of grid that our case uses by creating a grid class, and we even made it easy for the Cell's class to be extended (as shown with WatorCell's class). The XML parser, GUI, and Simulation classes are probably the most difficult to extend. They are just very specific to what needs to happen at each point in our program, but we have made them as abstract as possible - the GUI by using the resource bundle, and the simulation classes by hiding in the background what simulation gets called (abstract superclass Rules gets passed around). 
+
+
+###Design
+
+Design
+Reflect on how the entire program is currently organized
+Describe the overall design of the complete program: the basic design of each part (simulation, configuration, and visualization) and how they work together (i.e., what behavior, data, or resources each part depends on from the others).
+Describe how to add a new simulation to the program (include all the parts of the code or resources that need to be changed).
+Describe how your code is designed in more detail (but still try not to reference specific data structures or actual code).
+Justify why your code is designed the way it is or what issues you wrestled with if you think its design is lacking in some way. Are there any assumptions or dependencies in your code that impact the overall design of the program?
+Describe two features from the assignment specification (at least one you did not implement) in detail:
+What classes or resources are required to implement this feature?
+Describe the design of this feature in detail (what parts are closed? what implementation details are encapsulated? what assumptions are made? do they limit its flexibility?)
+How extensible is the design for this feature (is it clear how to extend the code as designed? what kind of change might be hard given this design?)
+Alternate Designs
+Reflect on alternate designs for the project based on your analysis of the current design or project discussions.
+Describe how well (or poorly) the original design handled the project's extensions to the original specifications.
+Describe two design decisions discussed, either as a team of with a UTA, in detail:
+What alternate designs were proposed?
+What are the trade-offs of the design choice (describe the pros and cons of the different designs)?
+Which would you prefer and why (it does not have to be the one that is currently implemented)?
+Conclusions
+Describe the two best features of the overall project's current design (these could include your own or others code).
+Describe the two worst features that remain in the overall project's current design (these could include your own or others code).
+To be a better designer, what should you start doing, keep doing, or stop doing?
+
+The overall design of the code is one that used inheritance to create our game objects. I do not think I went far enought with this implementation, but I think the precursors for a good software code is there. This can be easily seen in our Mario's object inheritance of sprite (Mario being a more complex sprite than our normal sprite, both inherited Sprites objects and added complexity in new features to our sprite object), and the use of lesser needed objects and images as sprites (the most basic game object available).
+
+At the moment adding another game would be somewhat simple. There are different methods that are called that create the world our main character interacts in. In order to change and add another level, I could create a class that instantiates all of the methods and sprites that a specific level needs. This would include only changing the variables for blocks and bad guys in our method calls, which could be passed as arguments to our constructor.
+
+My code assumed that aside from the game loop, and the two panes that the game would alternate between - the splashscreen pane and the game screen pane - that everything else would be a game object. I then decided to make each game object, whether user able to be interacted with or not, would be a sprite. A picture of a cloud, or the ground would be just as much of a sprite, as our main user interacted Mario object. In order to reflect this in our code, every object that appeared in our screen was a sprite object. Any object that went beyond this basic scope of just having an image appear at a specific location would extend our sprite object and implement its necessary more complex features - the way our Mario object extends our sprite object and adds the ability to be manipulated when receiving user input. I think I should have gone further with my game object and game loop and created a World object that implemented both the game pane and any game objects that it needed. 
+
+###Alternate Designs
+
+I decided to use inheritance to my advantage in this game software in order to greatly reduce my code duplication and to increase my code encapsulation. Aside from using setters and getters, I decided to make sub and super classes for all appearing objects in the game. I knew that I would need basic funcitonality for any picture I wanted to appear on the game screen, so any object that I wanted to appear became a sprite, with the ability to poses a picture and a x,y coordinate. This basic functionality was extended for Koomba sprites and the Mario sprite to include basic organized game image appearance and the handling of user input in order to create a wanted change in the state of the object - i.e. handle user key clicks in order to make Mario move. 
+
+I think the most important bug that has to do with our design implementation is that there should have been a world object as well. Because I decided to let our game loop handle most of our code interaction, I ended up creating a huge class with more than one use. I should have instead created several classes that when instantiated provide different features to our game. A second important bug is the dependency that is created between classes. Because of the relative large size and amount of powers/features of our main game loop, most objects that are created must depend on our game class for some instance of parameters. This is an unecessary dependency that should be taken care of in order to give our game more sustainability, and less data clumps. Finally, the most important bug that remains in the code is the use of a non-useful interface that only provides constants to different classes. We should collapse this interface and better use that class for more than constants. 
+
+

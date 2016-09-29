@@ -1,0 +1,33 @@
+package Model;
+
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+public abstract class CommandNode {
+
+	public CommandNode(){
+		
+	}
+	
+	public abstract void evaluate(String myCommand);
+	
+	public abstract void intermediateCanvasUpdate();
+
+	public class Node {
+		String commandType;
+		String commandName;
+		int noOfChildren;
+		int[] args;
+		Node next;
+		
+		public Node(String type, String name, int args){
+			this.commandType = type;
+			this.commandName = name;
+			this.noOfChildren = args;
+			this.args = new int[noOfChildren];
+		}
+	}
+	
+	public abstract Node grabNode();
+}

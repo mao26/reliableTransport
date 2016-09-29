@@ -1,0 +1,145 @@
+
+CompSci 308: Game Analysis
+===================
+
+> This is the link to the Analysis Description: [Analysis - Game](http://www.cs.duke.edu/courses/compsci308/spring16/assign/01_game/part3.php)
+
+Project Journal
+=======
+
+###Time Review
+In theory I started this project over Christmas break. I did not include this as my hours spent on this specific project, because what I did over break was learn about Java 8, and I learned how to use the java.awt.* package. This ended up not being as useful as it should have been, as I learned some very specific game design tools from the swing java toolkit. I spent two weeks and about 40 hours learning this package and recreating some old retro-games (snake, tetris, packman, reptar - a 2D shooter). This helped give me the understanding I needed to feel confident about attacking javaFX and my new game. I then spent about 50 hours recreating my Design plan of Mario. I started the day we had our first class, and then turned it in on Sunday, January 24th at 3AM. 
+
+I spent most of my time testing, debugging, and creating new features. I believed that I could refactor after I had completed all of my game features. However, this made the creation of my game a hundred-fold more difficult, as each new feature build on code dependencies that I had put into previous features. I began on a great path, creating many different classes and inheritance classes that made the structure of the game look good. It made coding the first couple of features easy to add. However, I started to go away from this strategy, and it came back and bit me in the butt. I got stuck for a couple of days trying to add animation to my character as he moved, and then became afraid of deleting code. These two things paralyzed me from refactoring my code. An old habit, being afraid to delete code, crept back into the foreground and it really hindered both my code design, and the amount of time I had remaining to create all the necessary game features. If I would have refactored code from the beginning after, every new feature, then each added feature would have been easier to implement in my code by taking away the dependencies that I had created between methods. I can't be afraid to delete code. At the very least I need to try to create a new method that tries to implement my desired feature. If it works, then I didn't have to worry about deleting code, but I ended up improving my game, and deleting wrong and unwanted code in the end - code that I was afraid to mess with before trying a new way of fixing my problem. 
+
+
+###Commits
+
+I committed code 19 times for a total of 1531 added lines, and a total of 654 deleted lines. 
+
+I do think that my commits did a good job of both being descriptive about value added to the code, and for accurately describing the projects story. This can be seen by the fact that I would explain what new methods I had committed, and by also explaining possible sources of problems down the line by the trajectory of the current code implementation. Basically, with every commit, I took the opportunity to both explain what features were added to the game, and I explained what my thinking was for where the game was heading (both possible routes of new feature implementation, and possible sources of concern for my current approach for code implementation)
+
+You can see this in this commit: [My favorite commit](https://github.com/duke-compsci308-spring2016/game_mao26/commit/7f892ae4b0d542682a8cb40615ef4133482a385f).
+Another benefit from this commit, is the fact I included a class of code I found online that I referenced in order to implement my 2D scrolling type platform for my game. 
+
+A second commit that shows some good software desing can be seen below. This commit shows the use of inherantance and encapsulation. I created a sprite object that would hold basic properties for all sprites, including the image, the objects location. This sprite object shows encapsulation by using getters and setter to manipulate our objects. This code then shows inheritance, because I then created our main characters class - Mario - that extends our sprite object and then adds extra methods that will only be used by Mario/ our main character. For example, most sprites will not be manipulated with user input, but our mario object will be. 
+[second fav](https://github.com/duke-compsci308-spring2016/game_mao26/commit/e186e32cc1adcf1dee0c99e62707f8b7db4a803e). 
+
+I will say that I could have used these commits better. Every time I committed code I used the command: -- git add . // which added the whole file (game_mao26) to be committed. Instead I should have added the specific files I wanted to commit in order to be more narrow with every commit, and better explain what my goal was with the new code added/refactored. The second way I could have better used my commits parallels the first point. I could have been more specific with my wording when committing and could have included the names of the methods for each feature that were added to improve my code. Would make github more organized and useful when referrencing. 
+
+###Conclusions
+I over-estimated the amount of work I would have to do for this project. But I do not regret doing so. I know I could have completed the assignment the way I had committed myself to. I got a dog during the second week of this project, and it took me a couple of days to re-adjust my schedule to working diligently. I was disappointed in the fact I let myself down, and could not complete my design, but this also showed me that I have to be smart about the way I write my code. I can't pretend to finish my game and then refactor. The point of refactoring isn't only to make your code more professional and readable, but it is also useful for making your life easier as you expand your project. This was a rude awakening to learning this very valuable consequence of refactoring. Now I know I must refactor every time I add a new feature. I also need to better document my code. Both of these things must, and will become, second nature to my programming. 
+
+The biggest part of the game that required the most editing, is the same aspect of my project I would work on now to improve my project; I created a Game class that did entirely too much. Because of this, my code began to get very confusing to read, and improve because as more was added to this class more dependencies appeared. Every new method added was painstakingly difficult ot implement and I have myself to blame. If I had refactored as I coded, this would not have been the case. I would have removed dependencies at the same rate they appeared, and I would have made my code more readable and useful for myself. This in turn would have made my code that much more malleable, and every new feature added to my code would have taken a quarter of the time to implement. 
+
+Design Review
+=======
+
+###Status
+
+I think overall there are several things that would have improved the design of my code, and several things that are a good starting point for my code. 
+The positives include:
+* A general consistent layout within classes. Usually a constructor call with an init method that initilizes most of the variables. 
+*No global static variables, unless they are constants, and the usual use of getters and setters to provide usuability of important variables between classes.
+* Variables use descriptive naming conventions. So you can usually determine what the method and variable do, or are used for.
+
+
+Some of the negatives include:
+* The attempted use of a created interface was good; however, the interface holds only a couple of constants. I could have used the collapsable hierarchy method in order to take these constants and moved them into the required class, or a could have created a subclass for our main game method that included not just these variables, but the underlying panes that mariosworld uses. 
+* I think in certain cases, some methods are difficult to comprehend, making it difficult for any co-workers to change the code. I think I need to better utilize comments, so that the code becomes easier to comprehend, regardless of how readable my cod is.
+*The code is also generally readable. Although, I would say it is not organized in the best way, there are definite precursors to a good software. There are attempts at keeping with the java standards of encapsulation, inheritance, and short methods. However, after reading code smells, I realize that my main game loop, does too much. I could easily extract some of the code and create a separate class that would not only ease code redability, but reduce code dependancy, and increase ease of adding features to the game. 
+* I honestly do not know how to find the dependancies with my code. However, I know they exists because everytime I wanted to add a feature to the game, I would then struggle with finding the right parameters and objects I would need to change in order to create the right effect in my code. This is defintely something I struggled with and I know that if I implemented constant refactoring, I would reduce overall code dependency and increase both redability and code multi-use. 
+
+Code 1:
+```java
+	private void createMario(String img) {
+		mario = new Mario(img);
+		mario.getImage().setY(FLOORTOP - mario.getHeight());
+		mario.getImage().setX(mario.getX());
+		// BorderPane marioPane = new BorderPane();
+		// gameScreen.getChildren().add(marioPane);
+		gameScreen.getChildren().add(mario.getImage());
+		gameScreen.setVisible(false);
+	}
+```
+This code is easy to understand in terms of that when this method is called in our game loop we can easily determine that our Mario object gets initialized and added to our game screen/ pane. One of the dependencies in this code that adds an extra layer of complexity is the fact that the Mario image must also be initialized to a certain location in order to be created and appear at that location of our game screen. This is also done by our setX and setY method, but instead of being initally called by our construtor, this method then calls the provided object setX and setY methods to initialize our image on the screen. This should be moved within the constructor.
+
+Code 2:
+```java
+	public Scene initGame() {
+		animation = new Timeline();
+		animation.setCycleCount(Timeline.INDEFINITE);
+		root = new Group();
+		Scene scene = new Scene(root, main.getScreenWidth(), main.getScreenHeight(), Color.BLACK);
+		createSplashScreen();
+		createGameScene();
+		return scene;
+	}
+```
+This is one of the first methods that gets called by our program. Our main method calls the easy to understand game.initGame() that will set up our initial javaFX project for our game. This includes setting up our scene, our root pane object, and then creating both of our two main panes (our splash screen and our game screen). We then have a instance of our game scene returned so that we can call methods to make our scene appear from our main method in our main class. This creates an encapsulation layer that allows us to know that both our splash and game screens are being created, but does not give us access to how these two panes are created. 
+
+###Design
+The overall design of the code is one that used inheritance to create our game objects. I do not think I went far enought with this implementation, but I think the precursors for a good software code is there. This can be easily seen in our Mario's object inheritance of sprite (Mario being a more complex sprite than our normal sprite, both inherited Sprites objects and added complexity in new features to our sprite object), and the use of lesser needed objects and images as sprites (the most basic game object available).
+
+At the moment adding another game would be somewhat simple. There are different methods that are called that create the world our main character interacts in. In order to change and add another level, I could create a class that instantiates all of the methods and sprites that a specific level needs. This would include only changing the variables for blocks and bad guys in our method calls, which could be passed as arguments to our constructor.
+
+My code assumed that aside from the game loop, and the two panes that the game would alternate between - the splashscreen pane and the game screen pane - that everything else would be a game object. I then decided to make each game object, whether user able to be interacted with or not, would be a sprite. A picture of a cloud, or the ground would be just as much of a sprite, as our main user interacted Mario object. In order to reflect this in our code, every object that appeared in our screen was a sprite object. Any object that went beyond this basic scope of just having an image appear at a specific location would extend our sprite object and implement its necessary more complex features - the way our Mario object extends our sprite object and adds the ability to be manipulated when receiving user input. I think I should have gone further with my game object and game loop and created a World object that implemented both the game pane and any game objects that it needed. 
+
+Code 1: 
+```java
+	public void move(KeyEvent event, ScrollPane pane, BorderPane game, BorderPane other, boolean zombMode) {
+		KeyCode key = event.getCode();
+		if (key == KeyCode.RIGHT) {
+			if (pane.getHvalue() == 1.0) {
+				finishLine = true;
+			} else {
+				if (pane.getHvalue() >= 0.2 && !koombaInit) {
+					koombaInit = true;
+					Koomba koomba1 = new Koomba(super.getX(), super.getY(), "bad1.png", game, 1500);
+					Koomba koomba2 = new Koomba(super.getX(), super.getY(), "bad1.png", game, 1600);
+					game.getChildren().addAll(koomba1.getImage(), koomba2.getImage());
+				}
+				marioView.setX(marioView.getX() + 44.75);
+			}
+		}
+		if (key == KeyCode.LEFT) {
+			marioView.setX(marioView.getX() - 44.75);
+		}
+		if (zombMode) {
+			if (key == KeyCode.UP) {
+				marioView.setY(marioView.getY() - 15);
+			}
+			if (key == KeyCode.DOWN) {
+				marioView.setY(marioView.getY() + 15);
+			}
+		}
+		if (marioView.getX() >= 1500 && marioView.getX() < 1515 && zombMode && marioView.getY() == FLOORTOP - BOXSIZE) {
+			gameOver = true;
+		}
+	}
+```
+This code from our Mario class interacts with our Game class. Our game class that contains our main game loop sends any user input to this class from Mario. From here we know what to do depending on our location - Mario's location relative on the map. If it's the end of the map then we know that we have won and can call our gameWonLost method. If a koomba is supposed to appear then we check our x,y coordinate and init our koomba, we also know when we lose the game. The good thing about this method is that we can change any number of paramenters and functionality of how Mario moves. Our main game loop keeps track of our world, but how Mario interacts with that world is contained within his class. This is clearly seen by our move method for Mario within his class that is called by our main game loop. 
+
+Code 2:
+```java
+	private void createTouch() {
+		scrollView.setOnKeyPressed(new EventHandler<KeyEvent>() {
+			@Override
+			public void handle(KeyEvent event) {
+				if (mario.getFinished())
+					gameWonLost("Game Won");
+				if (mario.gameOver())
+					gameWonLost("Game Over");
+				mario.move(event, scrollView, gameScreen, marioPane, zomb);
+			}
+		});
+	}
+```
+Here we have another instance of encapsulation. This actually shows us some of the other side of our Mario class move method. This shows us how the main game loop uses our logic from our move method for Mario to initialize different methods depending on our current object state. We even decrease code duplication by creating the using the same function for to intialize our game won or game lost screens. 
+###Alternate Designs
+
+I decided to use inheritance to my advantage in this game software in order to greatly reduce my code duplication and to increase my code encapsulation. Aside from using setters and getters, I decided to make sub and super classes for all appearing objects in the game. I knew that I would need basic funcitonality for any picture I wanted to appear on the game screen, so any object that I wanted to appear became a sprite, with the ability to poses a picture and a x,y coordinate. This basic functionality was extended for Koomba sprites and the Mario sprite to include basic organized game image appearance and the handling of user input in order to create a wanted change in the state of the object - i.e. handle user key clicks in order to make Mario move. 
+
+I think the most important bug that has to do with our design implementation is that there should have been a world object as well. Because I decided to let our game loop handle most of our code interaction, I ended up creating a huge class with more than one use. I should have instead created several classes that when instantiated provide different features to our game. A second important bug is the dependency that is created between classes. Because of the relative large size and amount of powers/features of our main game loop, most objects that are created must depend on our game class for some instance of parameters. This is an unecessary dependency that should be taken care of in order to give our game more sustainability, and less data clumps. Finally, the most important bug that remains in the code is the use of a non-useful interface that only provides constants to different classes. We should collapse this interface and better use that class for more than constants. 
+
+

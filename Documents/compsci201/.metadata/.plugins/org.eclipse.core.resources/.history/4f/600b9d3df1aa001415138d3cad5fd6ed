@@ -1,0 +1,10 @@
+
+public class UnderCoverCoder {
+	public int totalNotes(String[] clips, String[] notes) {
+        // fill in code here
+		for(String s : clips){
+			String[] s2 = clips.split();
+		}
+		
+    }
+}

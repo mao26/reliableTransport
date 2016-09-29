@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<settings settings_version="1.0">
+<sites>
+<site siteurl="http://www.cs.duke.edu/courses/compsci201/spring15/snarf/snarf.xml"/>
+</sites>
+<history>
+<install date="02.02.2015.01.41.48" location="/Users/mario_oliver93/Documents/compsci201/compsci201_CleverHangman" name="compsci201_CleverHangman" publisher="ola" version="2.0"/>
+<install date="02.09.2015.10.06.18" location="/Users/mario_oliver93/Documents/compsci201/compsci201_Rec5" name="compsci201_Rec5" publisher="azhar" version="2.0"/>
+<install date="02.16.2015.03.13.51" location="/Users/mario_oliver93/Documents/compsci201/compsci201_Rec6" name="compsci201_Rec6" publisher="azhar" version="2.0"/>
+<install date="02.16.2015.11.35.52" location="/Users/mario_oliver93/Documents/compsci201/compsci201_Hangman" name="compsci201_Hangman" publisher="azhar" version="2.0"/>
+<install date="03.02.2015.01.33.34" location="/Users/mario_oliver93/Documents/compsci201/compsci201_Rec8" name="compsci201_Rec8" publisher="azhar" version="2.0"/>
+<install date="03.23.2015.01.35.09" location="/Users/mario_oliver93/Documents/compsci201/compsci201_Rec10" name="compsci201_Rec10" publisher="azhar" version="2.0"/>
+<install date="03.30.2015.01.48.30" location="/Users/mario_oliver93/Documents/compsci201/compsci201_Boggle" name="compsci201_Boggle" publisher="azhar" version="2.0"/>
+<install date="04.06.2015.10.26.54" location="/Users/mario_oliver93/Documents/compsci201/compsci201_Rec12" name="compsci201_Rec12" publisher="azhar" version="2.0"/>
+</history>
+</settings>

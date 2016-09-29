@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename type &apos;HuffmanDecoding&apos; to &apos;Huffman&apos;&#x0A;- Original project: &apos;APT_6&apos;&#x0A;- Original element: &apos;HuffmanDecoding&apos;&#x0A;- Renamed element: &apos;Huffman&apos;&#x0A;- Update references to refactored element&#x0A;- Update textual occurrences in comments and strings" description="Rename type &apos;HuffmanDecoding&apos;" flags="589830" id="org.eclipse.jdt.ui.rename.type" input="/src&lt;{HuffmanDecoding.java[HuffmanDecoding" matchStrategy="1" name="Huffman" qualified="false" references="true" similarDeclarations="false" stamp="1428096966795" textual="false" version="1.0"/>
+</session>

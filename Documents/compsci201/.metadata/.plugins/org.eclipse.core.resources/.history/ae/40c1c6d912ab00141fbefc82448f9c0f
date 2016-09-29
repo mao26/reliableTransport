@@ -1,0 +1,8 @@
+
+public class CleverHangman {
+	String convertToPattern(char[] template, String word, char guess){
+		String secretWord = word.split;
+		String blank = "-,";
+		
+	}
+}

@@ -1,0 +1,22 @@
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+
+public class HighTechIncubator {
+	public String[] shameList(String[] location1, String[] location2, String[] location3) {
+// TODO: fill in code here
+		List<String> location1List = Arrays.asList(location1);
+		List<String> location2List = Arrays.asList(location2);
+		List<String> location3List = Arrays.asList(location3);
+		ArrayList<List<String>> bigList = new ArrayList<List<String>>();
+		bigList.add(location1List);
+		bigList.add(location2List);
+		bigList.add(location3List);
+		for(int i = 0; i< 3; i++){
+			for(int j = 0; j < bigList.get(i).size(); j++){
+				for()
+			}
+		}
+	}
+}
